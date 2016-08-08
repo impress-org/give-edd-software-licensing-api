@@ -40,6 +40,11 @@ if ( ! defined( 'EDD_SL_VERSION' ) ) {
 	define( 'EDD_SL_VERSION', '0.1' );
 }
 
+// Do nothing if EDD Software Licensing plugin is not activated
+if( ! class_exists( 'EDD_Software_Licensing', false ) ) {
+    return;
+}
+
 
 /**
  * Class Give_EDD_Software_Licensing_API_Extended
