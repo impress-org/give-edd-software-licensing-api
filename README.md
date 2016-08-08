@@ -1,0 +1,1 @@
+# Give-EDD-Software-Licensing-API-Extended
