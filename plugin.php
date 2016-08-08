@@ -6,7 +6,6 @@
  * Author: WordImpress
  * Author URI: https://wordimpress.com
  * Version: 0.1
- * Text Domain: give
  *
  * Give EDD Software Licensing API Extended is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
