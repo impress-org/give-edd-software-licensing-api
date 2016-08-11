@@ -20,8 +20,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Give. If not, see <http://www.gnu.org/licenses/>.
  *
+ * @package Give-EDD-Software-Licensing-API-Extended
  */
-
 
 if ( ! defined( 'GIVE_EDD_SL_API_EXTENDED_PLUGIN_DIR' ) ) {
 	define( 'GIVE_EDD_SL_API_EXTENDED_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
@@ -39,10 +39,10 @@ if ( ! defined( 'EDD_SL_VERSION' ) ) {
 	define( 'EDD_SL_VERSION', '0.1' );
 }
 
-// Do nothing if EDD Software Licensing plugin is not activated
+// Do nothing if EDD Software Licensing plugin is not activated.
 $active_plugins = array_map( 'strtolower', get_option( 'active_plugins', array() ) );
-if( ! in_array( 'edd-software-licensing/edd-software-licenses.php', $active_plugins ) ) {
-    return;
+if ( ! in_array( 'edd-software-licensing/edd-software-licenses.php', $active_plugins, true ) ) {
+	return;
 }
 
 
@@ -51,20 +51,20 @@ if( ! in_array( 'edd-software-licensing/edd-software-licenses.php', $active_plug
  */
 class Give_EDD_Software_Licensing_API_Extended extends EDD_Software_Licensing{
 
-    /**
-     * Instance.
-     *
-     * @since  0.1
-     * @access private
-     *
-     * @var object $instance
-     */
-    static private $instance;
+	/**
+	 * Instance.
+	 *
+	 * @since  0.1
+	 * @access private
+	 *
+	 * @var object $instance
+	 */
+	static private $instance;
 
 	/**
 	 * Give_EDD_Software_Licensing_API_Extended constructor.
 	 */
-    private function __construct(){}
+	private function __construct(){}
 
 
 	/**
@@ -75,13 +75,13 @@ class Give_EDD_Software_Licensing_API_Extended extends EDD_Software_Licensing{
 	 *
 	 * @return mixed
 	 */
-    static public function get_instance(){
-	    if (null === static::$instance) {
-		    static::$instance = new static();
-	    }
+	static public function get_instance() {
+		if ( null === static::$instance ) {
+			static::$instance = new static();
+		}
 
-	    return static::$instance;
-    }
+		return static::$instance;
+	}
 
 	/**
 	 * Add hooks.
@@ -91,62 +91,61 @@ class Give_EDD_Software_Licensing_API_Extended extends EDD_Software_Licensing{
 	 *
 	 * @return void
 	 */
-    public function hooks() {
-    	add_action( 'edd_check_subscription', array( $this, 'remote_subscription_check' ) );
-    }
+	public function hooks() {
+		add_action( 'edd_check_subscription', array( $this, 'remote_subscription_check' ) );
+	}
 
 
 	/**
-	 * Check if payment is for subscription or not
+	 * Check if payment is for subscription or not.
 	 *
 	 * @since  0.1
 	 * @access public
-	 * @param  int    $payment_id
+	 * @param  int $payment_id Payment ID.
 	 *
 	 * @return bool|string
 	 */
-
-	public function is_subscription( $payment_id ){
+	public function is_subscription( $payment_id ) {
 		return get_post_meta( $payment_id, '_edd_subscription_payment', true );
 	}
 
 
 	/**
-	 * Get subscription data
+	 * Get subscription data.
 	 *
 	 * @since  0.1
 	 * @access public
-	 * @param  int     $payment_id
-	 * 
+	 * @param  int $payment_id Payment ID.
+	 *
 	 * @return array|object|null Subscription data
 	 */
-    function get_subscription( $payment_id ){
+	function get_subscription( $payment_id ) {
 		global $wpdb;
 
-	    $result = $wpdb->get_results(
-		    $wpdb->prepare(
-			    "SELECT * FROM {$wpdb->prefix}edd_subscriptions WHERE parent_payment_id=%d",
-			    $payment_id
-		    ),
-		    ARRAY_A
-	    );
+		$result = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}edd_subscriptions WHERE parent_payment_id=%d",
+				$payment_id
+			),
+			ARRAY_A
+		);
 
-	    return ( ! empty( $result ) ? current( $result ) : array() );
-    }
+		return ( ! empty( $result ) ? current( $result ) : array() );
+	}
 
 	/**
-	 * Get licenses key
+	 * Get licenses key.
 	 *
 	 * @since  0.1
 	 * @access public
-	 * @param  int     $payment_id
+	 * @param  int $payment_id Payment ID.
 	 *
 	 * @return array|object|null Subscription data
 	 */
-	function get_licenses( $payment_id ){
+	function get_licenses( $payment_id ) {
 		global $wpdb;
 
-		// Get license ids,
+		// Get license ids.
 		$result = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT post_id FROM $wpdb->postmeta WHERE meta_key='_edd_sl_payment_id' AND meta_value=%d",
@@ -154,15 +153,20 @@ class Give_EDD_Software_Licensing_API_Extended extends EDD_Software_Licensing{
 			)
 		);
 
-		if( ! empty( $result ) ) {
+		if ( ! empty( $result ) ) {
 			$license_ids = implode( ',', $result );
 
 			// Get license keys.
 			$result = $wpdb->get_col(
 				$wpdb->prepare(
-					"SELECT meta_value FROM $wpdb->postmeta WHERE meta_key='%s' AND post_id IN ({$license_ids})",
+					"
+                    SELECT meta_value FROM $wpdb->postmeta
+                    WHERE meta_key='%s'
+                    AND post_id
+                    IN (%s)
+                    ",
 					'_edd_sl_key',
-					$payment_id
+					$license_ids
 				)
 			);
 		}
@@ -177,7 +181,7 @@ class Give_EDD_Software_Licensing_API_Extended extends EDD_Software_Licensing{
 	 * @since  0.1
 	 * @access public
 	 *
-	 * @param  array $data
+	 * @param  array $data Api request data.
 	 *
 	 * @return void
 	 */
@@ -195,15 +199,21 @@ class Give_EDD_Software_Licensing_API_Extended extends EDD_Software_Licensing{
 		$license      = ( $license = $this->get_licenses( $payment_id ) ) ? current( $license ) : '';
 
 		header( 'Content-Type: application/json' );
-		echo json_encode( apply_filters( 'give_edd_remote_license_check_response', array(
-				'success'          => (bool) $subscription,
-				'id'               => ! empty( $subscription['id'] ) ? absint( $subscription['id'] ) : '',
-				'license_key'      => $license,
-				'status'           => ! empty( $subscription['status'] ) ? $subscription['status'] : '',
-				'expires'          => ! empty( $subscription['expiration'] ) ? ( is_numeric( $subscription['expiration'] ) ? date( 'Y-m-d H:i:s', $subscription['expiration'] ) : $subscription['expiration'] ) : '',
-				'payment_id'       => $payment_id,
-				'invoice_url'      => urlencode( add_query_arg( 'payment_key', edd_get_payment_key( $payment_id ), edd_get_success_page_uri() ) ),
-			), $data, $license_id )
+		echo wp_json_encode(
+		    apply_filters(
+		        'give_edd_remote_license_check_response',
+				array(
+					'success'          => (bool) $subscription,
+					'id'               => ! empty( $subscription['id'] ) ? absint( $subscription['id'] ) : '',
+					'license_key'      => $license,
+					'status'           => ! empty( $subscription['status'] ) ? $subscription['status'] : '',
+					'expires'          => ! empty( $subscription['expiration'] ) ? ( is_numeric( $subscription['expiration'] ) ? date( 'Y-m-d H:i:s', $subscription['expiration'] ) : $subscription['expiration'] ) : '',
+					'payment_id'       => $payment_id,
+					'invoice_url'      => urlencode( add_query_arg( 'payment_key', edd_get_payment_key( $payment_id ), edd_get_success_page_uri() ) ),
+				),
+				$data,
+				$license_id
+			)
 		);
 
 		exit;
