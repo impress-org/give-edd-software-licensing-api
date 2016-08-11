@@ -40,7 +40,8 @@ if ( ! defined( 'EDD_SL_VERSION' ) ) {
 }
 
 // Do nothing if EDD Software Licensing plugin is not activated
-if( ! class_exists( 'EDD_Software_Licensing', false ) ) {
+$active_plugins = array_map( 'strtolower', get_option( 'active_plugins', array() ) );
+if( ! in_array( 'edd-software-licensing/edd-software-licenses.php', $active_plugins ) ) {
     return;
 }
 
