@@ -52,7 +52,7 @@ if ( ! in_array( 'edd-software-licensing/edd-software-licenses.php', $active_plu
 /**
  * Class Give_EDD_Software_Licensing_API_Extended
  */
-class Give_EDD_Software_Licensing_API_Extended extends EDD_Software_Licensing{
+class Give_EDD_Software_Licensing_API_Extended {
 
 	/**
 	 * Instance.
@@ -223,6 +223,13 @@ class Give_EDD_Software_Licensing_API_Extended extends EDD_Software_Licensing{
 	}
 }
 
+
 // Initialize plugin.
-Give_EDD_Software_Licensing_API_Extended::get_instance()->hooks();
+add_action(
+	'plugins_loaded',
+	array(
+		Give_EDD_Software_Licensing_API_Extended::get_instance(),
+		'plugin_setup',
+	)
+);
 
