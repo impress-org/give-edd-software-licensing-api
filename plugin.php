@@ -23,8 +23,8 @@
  * @package Give-EDD-Software-Licensing-API-Extended
  */
 
-// Exit if accessed directly
-if ( ! defined( 'ABSPATH' ) ) exit;
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 if ( ! defined( 'GIVE_EDD_SL_API_EXTENDED_PLUGIN_DIR' ) ) {
 	define( 'GIVE_EDD_SL_API_EXTENDED_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
@@ -60,7 +60,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 * @since  0.1
 	 * @access private
 	 *
-	 * @var object $instance
+	 * @var    object $instance
 	 */
 	static private $instance;
 
@@ -73,10 +73,11 @@ class Give_EDD_Software_Licensing_API_Extended {
 	/**
 	 * Get instance.
 	 *
-	 * @since  0.1
-	 * @access public
+	 * @since   0.1
+	 * @access  public
+	 * @wp-hook plugins_loaded
 	 *
-	 * @return mixed
+	 * @return  mixed
 	 */
 	static public function get_instance() {
 		if ( null === static::$instance ) {
@@ -89,12 +90,13 @@ class Give_EDD_Software_Licensing_API_Extended {
 	/**
 	 * Add hooks.
 	 *
-	 * @since  0.1
-	 * @access public
+	 * @since   0.1
+	 * @access  public
+	 * @wp-hook plugins_loaded
 	 *
-	 * @return void
+	 * @return  void
 	 */
-	public function hooks() {
+	public function plugin_setup() {
 		add_action( 'edd_check_subscription', array( $this, 'remote_subscription_check' ) );
 	}
 
@@ -110,6 +112,33 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 */
 	public function is_subscription( $payment_id ) {
 		return get_post_meta( $payment_id, '_edd_subscription_payment', true );
+	}
+
+	/**
+	 * Get license key.
+	 *
+	 * @since  0.1
+	 * @access public
+	 * @param  string $license_key License Key.
+	 *
+	 * @return bool|null|string
+	 */
+	function get_license_by_key( $license_key ) {
+		global $wpdb;
+
+		$license_id = $wpdb->get_var(
+			$wpdb->prepare(
+				"
+				SELECT post_id, SLEEP(RAND()*0.20) AS junk FROM $wpdb->postmeta
+				WHERE meta_key = '_edd_sl_key'
+				AND meta_value = '%s' LIMIT 1
+				",
+				$license_key
+			)
+		);
+
+		return ( $license_id !== null ? $license_id : false );
+
 	}
 
 
