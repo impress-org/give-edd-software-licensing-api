@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Give EDD Software Licensing API Extended
  * Plugin URI: https://givewp.com
- * Description:
+ * Description: Add more api endpoints for Easy Digital Downloads - Software Licenses.
  * Author: WordImpress
  * Author URI: https://wordimpress.com
  * Version: 0.2
