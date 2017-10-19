@@ -24,7 +24,9 @@
  */
 
 // Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) { exit; }
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 if ( ! defined( 'GIVE_EDD_SL_API_EXTENDED_PLUGIN_DIR' ) ) {
 	define( 'GIVE_EDD_SL_API_EXTENDED_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
@@ -67,7 +69,8 @@ class Give_EDD_Software_Licensing_API_Extended {
 	/**
 	 * Give_EDD_Software_Licensing_API_Extended constructor.
 	 */
-	private function __construct(){}
+	private function __construct() {
+	}
 
 
 	/**
@@ -106,6 +109,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 *
 	 * @since  0.1
 	 * @access public
+	 *
 	 * @param  int $payment_id Payment ID.
 	 *
 	 * @return bool|string
@@ -119,6 +123,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 *
 	 * @since  0.1
 	 * @access public
+	 *
 	 * @param  string $license_key License Key.
 	 *
 	 * @return bool|null|string
@@ -147,6 +152,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 *
 	 * @since  0.1
 	 * @access public
+	 *
 	 * @param  int $payment_id Payment ID.
 	 *
 	 * @return array|object|null Subscription data
@@ -170,6 +176,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 *
 	 * @since  0.1
 	 * @access public
+	 *
 	 * @param  int $payment_id Payment ID.
 	 *
 	 * @return array|object|null Subscription data
@@ -219,29 +226,29 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 */
 	function remote_subscription_check( $data ) {
 
-		$item_id     = ! empty( $data['item_id'] )   ? absint( $data['item_id'] ) : false;
-		$item_name   = ! empty( $data['item_name'] ) ? rawurldecode( $data['item_name'] ) : false;
-		$license     = urldecode( $data['license'] );
-		$url         = isset( $data['url'] ) ? urldecode( $data['url'] ) : '';
+		$item_id   = ! empty( $data['item_id'] ) ? absint( $data['item_id'] ) : false;
+		$item_name = ! empty( $data['item_name'] ) ? rawurldecode( $data['item_name'] ) : false;
+		$license   = urldecode( $data['license'] );
+		$url       = isset( $data['url'] ) ? urldecode( $data['url'] ) : '';
 
-		$license_id  = $this->get_license_by_key( $license );
-		$payment_id  = get_post_meta( $license_id, '_edd_sl_payment_id', true );
+		$license_id = $this->get_license_by_key( $license );
+		$payment_id = get_post_meta( $license_id, '_edd_sl_payment_id', true );
 
 		$subscription = $this->get_subscription( $payment_id );
 		$license      = ( $license = $this->get_licenses( $payment_id ) ) ? current( $license ) : '';
 
 		header( 'Content-Type: application/json' );
 		echo wp_json_encode(
-		    apply_filters(
-		        'give_edd_remote_license_check_response',
+			apply_filters(
+				'give_edd_remote_license_check_response',
 				array(
-					'success'          => (bool) $subscription,
-					'id'               => ! empty( $subscription['id'] ) ? absint( $subscription['id'] ) : '',
-					'license_key'      => $license,
-					'status'           => ! empty( $subscription['status'] ) ? $subscription['status'] : '',
-					'expires'          => ! empty( $subscription['expiration'] ) ? ( is_numeric( $subscription['expiration'] ) ? date( 'Y-m-d H:i:s', $subscription['expiration'] ) : $subscription['expiration'] ) : '',
-					'payment_id'       => $payment_id,
-					'invoice_url'      => urlencode( add_query_arg( 'payment_key', edd_get_payment_key( $payment_id ), edd_get_success_page_uri() ) ),
+					'success'     => (bool) $subscription,
+					'id'          => ! empty( $subscription['id'] ) ? absint( $subscription['id'] ) : '',
+					'license_key' => $license,
+					'status'      => ! empty( $subscription['status'] ) ? $subscription['status'] : '',
+					'expires'     => ! empty( $subscription['expiration'] ) ? ( is_numeric( $subscription['expiration'] ) ? date( 'Y-m-d H:i:s', $subscription['expiration'] ) : $subscription['expiration'] ) : '',
+					'payment_id'  => $payment_id,
+					'invoice_url' => urlencode( add_query_arg( 'payment_key', edd_get_payment_key( $payment_id ), edd_get_success_page_uri() ) ),
 				),
 				$data,
 				$license_id
