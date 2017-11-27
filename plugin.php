@@ -104,49 +104,6 @@ class Give_EDD_Software_Licensing_API_Extended {
 		add_action( 'edd_check_subscription', array( $this, 'remote_subscription_check' ) );
 	}
 
-
-	/**
-	 * Check if payment is for subscription or not.
-	 *
-	 * @since  0.1
-	 * @access public
-	 *
-	 * @param  int $payment_id Payment ID.
-	 *
-	 * @return bool|string
-	 */
-	public function is_subscription( $payment_id ) {
-		return get_post_meta( $payment_id, '_edd_subscription_payment', true );
-	}
-
-	/**
-	 * Get license key.
-	 *
-	 * @since  0.1
-	 * @access public
-	 *
-	 * @param  string $license_key License Key.
-	 *
-	 * @return bool|null|string
-	 */
-	function get_license_by_key( $license_key ) {
-		global $wpdb;
-
-		$license_id = $wpdb->get_var(
-			$wpdb->prepare(
-				"
-				SELECT post_id, SLEEP(RAND()*0.20) AS junk FROM $wpdb->postmeta
-				WHERE meta_key = '_edd_sl_key'
-				AND meta_value = '%s' LIMIT 1
-				",
-				$license_key
-			)
-		);
-
-		return ( $license_id !== null ? $license_id : false );
-	}
-
-
 	/**
 	 * Get subscription data.
 	 *
@@ -169,48 +126,6 @@ class Give_EDD_Software_Licensing_API_Extended {
 		);
 
 		return ( ! empty( $result ) ? current( $result ) : array() );
-	}
-
-	/**
-	 * Get licenses key.
-	 *
-	 * @since  0.1
-	 * @access public
-	 *
-	 * @param  int $payment_id Payment ID.
-	 *
-	 * @return array|object|null Subscription data
-	 */
-	function get_licenses( $payment_id ) {
-		global $wpdb;
-
-		// Get license ids.
-		$result = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT post_id FROM $wpdb->postmeta WHERE meta_key='_edd_sl_payment_id' AND meta_value=%d",
-				$payment_id
-			)
-		);
-
-		if ( ! empty( $result ) ) {
-			$license_ids = implode( ',', $result );
-
-			// Get license keys.
-			$result = $wpdb->get_col(
-				$wpdb->prepare(
-					"
-                    SELECT meta_value FROM $wpdb->postmeta
-                    WHERE meta_key='%s'
-                    AND post_id
-                    IN (%s)
-                    ",
-					'_edd_sl_key',
-					$license_ids
-				)
-			);
-		}
-
-		return $result;
 	}
 
 
