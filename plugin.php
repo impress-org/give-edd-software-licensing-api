@@ -100,6 +100,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 * @return  void
 	 */
 	public function plugin_setup() {
+
 		add_action( 'edd_check_subscription', array( $this, 'remote_subscription_check' ) );
 	}
 
@@ -143,7 +144,6 @@ class Give_EDD_Software_Licensing_API_Extended {
 		);
 
 		return ( $license_id !== null ? $license_id : false );
-
 	}
 
 
@@ -226,32 +226,35 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 */
 	function remote_subscription_check( $data ) {
 
-		$item_id   = ! empty( $data['item_id'] ) ? absint( $data['item_id'] ) : false;
-		$item_name = ! empty( $data['item_name'] ) ? rawurldecode( $data['item_name'] ) : false;
-		$license   = urldecode( $data['license'] );
-		$url       = isset( $data['url'] ) ? urldecode( $data['url'] ) : '';
+		$item_id     = ! empty( $data['item_id'] ) ? absint( $data['item_id'] ) : false;
+		$item_name   = ! empty( $data['item_name'] ) ? rawurldecode( $data['item_name'] ) : false;
+		$license_key = urldecode( $data['license'] );
+		$url         = isset( $data['url'] ) ? urldecode( $data['url'] ) : '';
+		$license = edd_software_licensing()->get_license( $license_key, true );
 
-		$license_id = $this->get_license_by_key( $license );
-		$payment_id = get_post_meta( $license_id, '_edd_sl_payment_id', true );
-
-		$subscription = $this->get_subscription( $payment_id );
-		$license      = ( $license = $this->get_licenses( $payment_id ) ) ? current( $license ) : '';
+		$subscriptions = array();
+		foreach ( $license->payment_ids as $payment_id ) {
+			$subscription = $this->get_subscription( $payment_id );
+			if('active' === $subscription['status']) {
+				$subscriptions[] = $subscription;
+			}
+		}
 
 		header( 'Content-Type: application/json' );
 		echo wp_json_encode(
 			apply_filters(
 				'give_edd_remote_license_check_response',
 				array(
-					'success'     => (bool) $subscription,
+					'success'     => ! empty( $subscriptions ),
 					'id'          => ! empty( $subscription['id'] ) ? absint( $subscription['id'] ) : '',
-					'license_key' => $license,
+					'license_key' => $license_key,
 					'status'      => ! empty( $subscription['status'] ) ? $subscription['status'] : '',
 					'expires'     => ! empty( $subscription['expiration'] ) ? ( is_numeric( $subscription['expiration'] ) ? date( 'Y-m-d H:i:s', $subscription['expiration'] ) : $subscription['expiration'] ) : '',
 					'payment_id'  => $payment_id,
 					'invoice_url' => urlencode( add_query_arg( 'payment_key', edd_get_payment_key( $payment_id ), edd_get_success_page_uri() ) ),
 				),
 				$data,
-				$license_id
+				$license
 			)
 		);
 
@@ -268,4 +271,3 @@ add_action(
 		'plugin_setup',
 	)
 );
-
