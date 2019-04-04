@@ -100,8 +100,85 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 * @return  void
 	 */
 	public function plugin_setup() {
-
+		add_filter( 'edd_remote_license_check_response', array( $this, 'remote_license_check' ), 10, 3 );
 		add_action( 'edd_check_subscription', array( $this, 'remote_subscription_check' ) );
+	}
+
+
+	/**
+	 * Add custom data to api response
+	 *
+	 * @since 0.3
+	 *
+	 * @todo: return result only if source set to give
+	 *
+	 * @param $response
+	 * @param $args
+	 * @param $license_id
+	 *
+	 * @return mixed
+	 */
+	public function remote_license_check( $response, $args, $license_id ){
+		/* @var EDD_SL_License $license */
+		$license = EDD_Software_Licensing::instance()->get_license( $license_id );
+
+		/* @var EDD_Download $license */
+		$download = $license->download;
+
+		$download_file = $this->get_latest_release_url($download->get_files(  $license->price_id ) );
+
+		// Bailout: verify if we are looking at give addon or others.
+		if( ! $download_file ) {
+			return $response;
+		}
+
+		$response['download_file'] = $download_file;
+		$response['current_version'] = get_post_meta( $download->ID, '_edd_sl_version', true );
+
+		// Set plugin slug if missing.
+		if( empty( $response['item_name'] ) ) {
+			$args['item_name'] = $response['item_name'] = str_replace( array( 'give-', '.zip' ), '', basename( $response['download_file'] ) );
+			$response['license'] = EDD_Software_Licensing::instance()->check_license( $args );
+		}
+
+		return $response;
+	}
+
+
+	/**
+	 * Get latest release url
+	 *
+	 * @since 0.3
+	 *
+	 * @param array $download_files
+	 *
+	 * @return string
+	 */
+	private function get_latest_release_url( $download_files ){
+		if( empty($download_files ) ) {
+			return '';
+		}
+
+		/**
+		 * Things we are assuming here
+		 * 1. plugin file name must start with give
+		 * 2. Only latest version file path will be without plugin version
+		 * 3. download file always contain only one url to latest release.
+		 */
+		foreach ( $download_files as $download_file ) {
+			$zip_filename = basename( $download_file['file'] );
+			 preg_match( '/-d/', $zip_filename, $version_number_part );
+
+			// Must be a give addon.
+			if(
+				! empty( $version_number_part ) // if muber detected in url then download file belong to older version.
+				|| false === strpos( $zip_filename, 'give' )
+			){
+				continue;
+			}
+
+			return $download_file['file'];
+		}
 	}
 
 	/**
