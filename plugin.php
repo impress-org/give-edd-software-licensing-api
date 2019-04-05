@@ -125,20 +125,26 @@ class Give_EDD_Software_Licensing_API_Extended {
 		/* @var EDD_Download $license */
 		$download = $license->download;
 
-		$download_file = $this->get_latest_release_url($download->get_files(  $license->price_id ) );
+		$download_file_info = $this->get_latest_release_url($download->get_files(  $license->price_id ) );
 
 		// Bailout: verify if we are looking at give addon or others.
-		if( ! $download_file ) {
+		if( ! $download_file_info ) {
 			return $response;
 		}
 
-		$response['download_file'] = $download_file;
+		$response['download_file'] = edd_get_download_file_url(
+			$license->key,
+			$response['customer_email'],
+			$download_file_info['index'],
+			$download->ID,
+			$license->price_id
+		);
 		$response['current_version'] = get_post_meta( $download->ID, '_edd_sl_version', true );
 
 		// Set plugin slug if missing.
-		if( empty( $response['item_name'] ) ) {
-			$args['item_name'] = $response['item_name'] = str_replace( array( 'give-', '.zip' ), '', basename( $response['download_file'] ) );
-			$response['license'] = EDD_Software_Licensing::instance()->check_license( $args );
+		if( ! $response['item_name'] && $response['download_file'] ) {
+			$args['item_name'] = $response['item_name'] = str_replace(  ' ', '-', strtolower( edd_software_licensing()->get_download_name( $license_id ) ));
+			$response['license'] = edd_software_licensing()->get_download_version( $download->ID );
 		}
 
 		return $response;
@@ -152,11 +158,11 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 *
 	 * @param array $download_files
 	 *
-	 * @return string
+	 * @return array
 	 */
 	private function get_latest_release_url( $download_files ){
 		if( empty($download_files ) ) {
-			return '';
+			return array();
 		}
 
 		/**
@@ -177,7 +183,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 				continue;
 			}
 
-			return $download_file['file'];
+			return $download_file;
 		}
 	}
 
