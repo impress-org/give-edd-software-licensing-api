@@ -122,6 +122,12 @@ class Give_EDD_Software_Licensing_API_Extended {
 		/* @var EDD_SL_License $license */
 		$license = EDD_Software_Licensing::instance()->get_license( $license_id );
 
+
+		// Bailout if license does not found.
+		if( ! $license ) {
+			return $response;
+		}
+
 		/* @var EDD_Download $license */
 		$download = $license->download;
 
