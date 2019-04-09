@@ -139,12 +139,12 @@ class Give_EDD_Software_Licensing_API_Extended {
 			$download->ID,
 			$license->price_id
 		);
-		$response['current_version'] = get_post_meta( $download->ID, '_edd_sl_version', true );
+		$response['current_version'] = edd_software_licensing()->get_download_version( $download->ID );
 
 		// Set plugin slug if missing.
 		if( ! $response['item_name'] ) {
 			$args['item_name'] = $response['item_name'] = str_replace(  ' ', '-', strtolower( edd_software_licensing()->get_download_name( $license_id ) ));
-			$response['license'] = edd_software_licensing()->get_download_version( $download->ID );
+			$response['license'] = edd_software_licensing()->check_license( $args );
 		}
 
 		return $response;
