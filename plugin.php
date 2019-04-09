@@ -142,7 +142,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 		$response['current_version'] = get_post_meta( $download->ID, '_edd_sl_version', true );
 
 		// Set plugin slug if missing.
-		if( ! $response['item_name'] && $response['download_file'] ) {
+		if( ! $response['item_name'] ) {
 			$args['item_name'] = $response['item_name'] = str_replace(  ' ', '-', strtolower( edd_software_licensing()->get_download_name( $license_id ) ));
 			$response['license'] = edd_software_licensing()->get_download_version( $download->ID );
 		}
