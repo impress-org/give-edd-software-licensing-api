@@ -133,7 +133,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 		}
 
 		$response['download_file'] = edd_get_download_file_url(
-			$license->key,
+			edd_get_payment_key( $license->payment_id ), // @todo: which payment id we need to pass if multiple payment happen.
 			$response['customer_email'],
 			$download_file_info['index'],
 			$download->ID,
