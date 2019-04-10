@@ -40,10 +40,6 @@ if ( ! defined( 'GIVE_EDD_SL_API_EXTENDED_PLUGIN_FILE' ) ) {
 	define( 'GIVE_EDD_SL_API_EXTENDED_PLUGIN_FILE', __FILE__ );
 }
 
-if ( ! defined( 'EDD_SL_VERSION' ) ) {
-	define( 'EDD_SL_VERSION', '0.1' );
-}
-
 // Do nothing if EDD Software Licensing plugin is not activated.
 $active_plugins = array_map( 'strtolower', get_option( 'active_plugins', array() ) );
 if ( ! in_array( 'edd-software-licensing/edd-software-licenses.php', $active_plugins, true ) ) {
