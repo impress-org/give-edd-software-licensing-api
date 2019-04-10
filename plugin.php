@@ -60,7 +60,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 *
 	 * @var    object $instance
 	 */
-	static private $instance;
+	private static $instance;
 
 	/**
 	 * Give_EDD_Software_Licensing_API_Extended constructor.
@@ -78,7 +78,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 *
 	 * @return  mixed
 	 */
-	static public function get_instance() {
+	public static function get_instance() {
 		if ( null === static::$instance ) {
 			static::$instance = new static();
 		}
@@ -114,38 +114,37 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 *
 	 * @return mixed
 	 */
-	public function remote_license_check( $response, $args, $license_id ){
+	public function remote_license_check( $response, $args, $license_id ) {
 		/* @var EDD_SL_License $license */
 		$license = EDD_Software_Licensing::instance()->get_license( $license_id );
 
-
 		// Bailout if license does not found.
-		if( ! $license ) {
+		if ( ! $license ) {
 			return $response;
 		}
 
 		/* @var EDD_Download $license */
 		$download = $license->download;
 
-		$download_file_info = $this->get_latest_release_url($download->get_files(  $license->price_id ) );
+		$download_file_info = $this->get_latest_release_url( $download->get_files( $license->price_id ) );
 
 		// Bailout: verify if we are looking at give addon or others.
-		if( ! $download_file_info ) {
+		if ( ! $download_file_info ) {
 			return $response;
 		}
 
-		$response['download_file'] = edd_get_download_file_url(
+		$response['download_file']   = edd_get_download_file_url(
 			edd_get_payment_key( $license->payment_id ), // @todo: which payment id we need to pass if multiple payment happen.
 			$response['customer_email'],
-			$download_file_info['index'],
+			$download_file_info['array_index'],
 			$download->ID,
 			$license->price_id
 		);
 		$response['current_version'] = edd_software_licensing()->get_download_version( $download->ID );
 
 		// Set plugin slug if missing.
-		if( ! $response['item_name'] ) {
-			$args['item_name'] = $response['item_name'] = str_replace(  ' ', '-', strtolower( edd_software_licensing()->get_download_name( $license_id ) ));
+		if ( ! $response['item_name'] ) {
+			$args['item_name']   = $response['item_name'] = str_replace( ' ', '-', strtolower( edd_software_licensing()->get_download_name( $license_id ) ) );
 			$response['license'] = edd_software_licensing()->check_license( $args );
 		}
 
@@ -162,8 +161,8 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 *
 	 * @return array
 	 */
-	private function get_latest_release_url( $download_files ){
-		if( empty($download_files ) ) {
+	private function get_latest_release_url( $download_files ) {
+		if ( empty( $download_files ) ) {
 			return array();
 		}
 
@@ -173,17 +172,20 @@ class Give_EDD_Software_Licensing_API_Extended {
 		 * 2. Only latest version file path will be without plugin version
 		 * 3. download file always contain only one url to latest release.
 		 */
-		foreach ( $download_files as $download_file ) {
+		foreach ( $download_files as $index => $download_file ) {
 			$zip_filename = basename( $download_file['file'] );
-			 preg_match( '/-d/', $zip_filename, $version_number_part );
+			preg_match( '/-d/', $zip_filename, $version_number_part );
 
 			// Must be a give addon.
-			if(
+			if (
 				! empty( $version_number_part ) // if muber detected in url then download file belong to older version.
 				|| false === strpos( $zip_filename, 'give' )
-			){
+			) {
 				continue;
 			}
+
+			// We need this for edd_get_download_file_url.
+			$download_file['array_index'] = $index;
 
 			return $download_file;
 		}
@@ -230,12 +232,12 @@ class Give_EDD_Software_Licensing_API_Extended {
 		$item_name   = ! empty( $data['item_name'] ) ? rawurldecode( $data['item_name'] ) : false;
 		$license_key = urldecode( $data['license'] );
 		$url         = isset( $data['url'] ) ? urldecode( $data['url'] ) : '';
-		$license = edd_software_licensing()->get_license( $license_key, true );
+		$license     = edd_software_licensing()->get_license( $license_key, true );
 
 		$subscriptions = array();
 		foreach ( $license->payment_ids as $payment_id ) {
 			$subscription = $this->get_subscription( $payment_id );
-			if('active' === $subscription['status']) {
+			if ( 'active' === $subscription['status'] ) {
 				$subscriptions[] = $subscription;
 			}
 		}
