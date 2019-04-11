@@ -72,11 +72,11 @@ class Give_EDD_Software_Licensing_API_Extended {
 	/**
 	 * Get instance.
 	 *
+	 * @return  mixed
 	 * @since   0.1
 	 * @access  public
 	 * @wp-hook plugins_loaded
 	 *
-	 * @return  mixed
 	 */
 	public static function get_instance() {
 		if ( null === static::$instance ) {
@@ -89,11 +89,11 @@ class Give_EDD_Software_Licensing_API_Extended {
 	/**
 	 * Add hooks.
 	 *
+	 * @return  void
 	 * @since   0.1
 	 * @access  public
 	 * @wp-hook plugins_loaded
 	 *
-	 * @return  void
 	 */
 	public function plugin_setup() {
 		add_filter( 'edd_remote_license_check_response', array( $this, 'remote_license_check' ), 10, 3 );
@@ -104,17 +104,19 @@ class Give_EDD_Software_Licensing_API_Extended {
 	/**
 	 * Add custom data to api response
 	 *
-	 * @since 0.3
-	 *
-	 * @todo: return result only if source set to give
-	 *
 	 * @param $response
 	 * @param $args
 	 * @param $license_id
 	 *
 	 * @return mixed
+	 * @since 0.3
+	 *
+	 * @todo  : return result only if source set to give or something else because we do not want to sent extra information on every license check
+	 *
 	 */
 	public function remote_license_check( $response, $args, $license_id ) {
+		// @todo: decide whether all access pass can be varibale priced if yes then how it will impect code..
+		// @todo: decide whether send this addition license data to only add-ons page of Give core.
 		/* @var EDD_SL_License $license */
 		$license = EDD_Software_Licensing::instance()->get_license( $license_id );
 
@@ -126,21 +128,74 @@ class Give_EDD_Software_Licensing_API_Extended {
 		/* @var EDD_Download $license */
 		$download = $license->download;
 
-		$download_file_info = $this->get_latest_release_url( $download->get_files( $license->price_id ) );
+		$response['download']           = '';
+		$response['is_all_access_pass'] = false;
 
-		// Bailout: verify if we are looking at give addon or others.
-		if ( ! $download_file_info ) {
-			return $response;
+		// @todo: review till when we have to show download links for all access pass or single license.
+		// @todo: check if need to verify download limit
+		if (
+			function_exists( 'edd_all_access_download_is_all_access' )
+			&& edd_all_access_download_is_all_access( $download->id )
+		) {
+			$response['is_all_access_pass'] = true;
+
+			/* @var  EDD_All_Access_Pass $all_access_pass */
+			$all_access_pass = new EDD_All_Access_Pass( $license->payment_id, $download->ID, $license->price_id );
+
+			// Get downloads attached to all access pass.
+			if ( ! empty( $all_access_pass->all_access_meta['all_access_categories'] ) ) {
+				$response['download'] = array();
+
+				$included_downloads = new WP_Query( array(
+					'post_type'      => 'download',
+					'post_status'    => 'publish',
+					'tax_query'      => array(
+						array(
+							'taxonomy' => 'download_category',
+							'field'    => 'term_id',
+							'terms'    => $all_access_pass->all_access_meta['all_access_categories'],
+						),
+					),
+					'posts_per_page' => - 1,
+				) );
+
+				// print_r( $included_downloads );
+
+				if ( $included_downloads->have_posts() ) {
+					while ( $included_downloads->have_posts() ) {
+						$included_downloads->the_post();
+
+						$included_download = new EDD_Download( get_the_ID() );
+						$file              = $this->get_latest_release( $included_download->files );
+
+						// @todo by default this function set price id to default variable price if any . revalidate this if it will create any issue or not
+						// Override exiting file url with protect download file url.
+						$file['file']            = edd_all_access_product_download_url( $included_download->ID, 0, $file['array_index'] );
+						$file['current_version'] = edd_software_licensing()->get_download_version( $included_download->ID );
+						$response['download'][]  = $file;
+					}
+
+					wp_reset_postdata();
+				}
+			}
+		} else {
+			$download_file_info = $this->get_latest_release( $download->get_files( $license->price_id ) );
+
+			// Bailout: verify if we are looking at give addon or others.
+			if ( ! $download_file_info ) {
+				return $response;
+			}
+
+			$response['download'] = edd_get_download_file_url(
+				edd_get_payment_key( $license->payment_id ), // @todo: which payment id we need to pass if multiple payment happen.
+				$response['customer_email'],
+				$download_file_info['array_index'],
+				$download->ID,
+				$license->price_id
+			);
+
+			$response['current_version'] = edd_software_licensing()->get_download_version( $download->ID );
 		}
-
-		$response['download_file']   = edd_get_download_file_url(
-			edd_get_payment_key( $license->payment_id ), // @todo: which payment id we need to pass if multiple payment happen.
-			$response['customer_email'],
-			$download_file_info['array_index'],
-			$download->ID,
-			$license->price_id
-		);
-		$response['current_version'] = edd_software_licensing()->get_download_version( $download->ID );
 
 		// Set plugin slug if missing.
 		if ( ! $response['item_name'] ) {
@@ -155,13 +210,13 @@ class Give_EDD_Software_Licensing_API_Extended {
 	/**
 	 * Get latest release url
 	 *
-	 * @since 0.3
-	 *
 	 * @param array $download_files
 	 *
 	 * @return array
+	 * @since 0.3
+	 *
 	 */
-	private function get_latest_release_url( $download_files ) {
+	private function get_latest_release( $download_files ) {
 		if ( empty( $download_files ) ) {
 			return array();
 		}
@@ -173,6 +228,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 		 * 3. download file always contain only one url to latest release.
 		 */
 		foreach ( $download_files as $index => $download_file ) {
+			// @todo: currently we are only check if url contain does not contain any version number if not then it will be latest release url. revalidate it.
 			$zip_filename = basename( $download_file['file'] );
 			preg_match( '/-d/', $zip_filename, $version_number_part );
 
@@ -194,12 +250,12 @@ class Give_EDD_Software_Licensing_API_Extended {
 	/**
 	 * Get subscription data.
 	 *
+	 * @param int $payment_id Payment ID.
+	 *
+	 * @return array|object|null Subscription data
 	 * @since  0.1
 	 * @access public
 	 *
-	 * @param  int $payment_id Payment ID.
-	 *
-	 * @return array|object|null Subscription data
 	 */
 	function get_subscription( $payment_id ) {
 		global $wpdb;
@@ -219,12 +275,12 @@ class Give_EDD_Software_Licensing_API_Extended {
 	/**
 	 * Check subscription for addon
 	 *
+	 * @param array $data Api request data.
+	 *
+	 * @return void
 	 * @since  0.1
 	 * @access public
 	 *
-	 * @param  array $data Api request data.
-	 *
-	 * @return void
 	 */
 	function remote_subscription_check( $data ) {
 
