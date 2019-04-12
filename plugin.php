@@ -128,6 +128,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 		/* @var EDD_Download $license */
 		$download = $license->download;
 
+		$response['license_key']        = $args['key'];
 		$response['license_id']         = $license->ID;
 		$response['payment_id']         = $license->payment_id;
 		$response['download']           = '';
