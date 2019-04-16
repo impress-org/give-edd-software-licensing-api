@@ -304,7 +304,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 		header( 'Content-Type: application/json' );
 		echo wp_json_encode(
 			apply_filters(
-				'give_edd_remote_license_check_response',
+				'give_edd_remote_subscription_check_response',
 				array(
 					'success'     => ! empty( $subscriptions ),
 					'id'          => ! empty( $subscription['id'] ) ? absint( $subscription['id'] ) : '',
