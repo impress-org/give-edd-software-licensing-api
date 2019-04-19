@@ -121,7 +121,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 		$license = EDD_Software_Licensing::instance()->get_license( $license_id );
 
 		// Bailout if license does not found.
-		if ( ! $license ) {
+		if ( ! $license || ! $response['success'] ) {
 			return $response;
 		}
 
