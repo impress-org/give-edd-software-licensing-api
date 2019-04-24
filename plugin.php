@@ -301,19 +301,42 @@ class Give_EDD_Software_Licensing_API_Extended {
 			}
 		}
 
+		return array(
+			'success'     => ! empty( $subscriptions ),
+			'id'          => ! empty( $subscription['id'] ) ? absint( $subscription['id'] ) : '',
+			'license_key' => $license_key,
+			'status'      => ! empty( $subscription['status'] ) ? $subscription['status'] : '',
+			'expires'     => ! empty( $subscription['expiration'] )
+				? (
+				is_numeric( $subscription['expiration'] )
+					? date( 'Y-m-d H:i:s', $subscription['expiration'] )
+					: $subscription['expiration']
+				)
+				: '',
+			'payment_id'  => $payment_id,
+			'invoice_url' => urlencode( add_query_arg( 'payment_key', edd_get_payment_key( $payment_id ), edd_get_success_page_uri() ) ),
+		);
+	}
+
+
+	/**
+	 * Check subscription for addon
+	 *
+	 * @param array $data Api request data.
+	 *
+	 * @return void
+	 * @since  0.1
+	 * @access public
+	 *
+	 */
+	function remote_subscription_check( $data ) {
+		$license = edd_software_licensing()->get_license( urldecode( $data['license'] ), true );
+
 		header( 'Content-Type: application/json' );
 		echo wp_json_encode(
 			apply_filters(
 				'give_edd_remote_subscription_check_response',
-				array(
-					'success'     => ! empty( $subscriptions ),
-					'id'          => ! empty( $subscription['id'] ) ? absint( $subscription['id'] ) : '',
-					'license_key' => $license_key,
-					'status'      => ! empty( $subscription['status'] ) ? $subscription['status'] : '',
-					'expires'     => ! empty( $subscription['expiration'] ) ? ( is_numeric( $subscription['expiration'] ) ? date( 'Y-m-d H:i:s', $subscription['expiration'] ) : $subscription['expiration'] ) : '',
-					'payment_id'  => $payment_id,
-					'invoice_url' => urlencode( add_query_arg( 'payment_key', edd_get_payment_key( $payment_id ), edd_get_success_page_uri() ) ),
-				),
+				$this->subscription_check( $data ),
 				$data,
 				$license
 			)
