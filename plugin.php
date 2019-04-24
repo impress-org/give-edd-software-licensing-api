@@ -276,21 +276,14 @@ class Give_EDD_Software_Licensing_API_Extended {
 
 
 	/**
-	 * Check subscription for addon
+	 * Get subscription information
 	 *
-	 * @param array $data Api request data.
+	 * @param array $data
 	 *
-	 * @return void
-	 * @since  0.1
-	 * @access public
-	 *
+	 * @return array
 	 */
-	function remote_subscription_check( $data ) {
-
-		$item_id     = ! empty( $data['item_id'] ) ? absint( $data['item_id'] ) : false;
-		$item_name   = ! empty( $data['item_name'] ) ? rawurldecode( $data['item_name'] ) : false;
+	private function subscription_check( $data ) {
 		$license_key = urldecode( $data['license'] );
-		$url         = isset( $data['url'] ) ? urldecode( $data['url'] ) : '';
 		$license     = edd_software_licensing()->get_license( $license_key, true );
 
 		$subscriptions = array();
