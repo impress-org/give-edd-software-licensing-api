@@ -117,6 +117,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	public function remote_license_check( $response, $args, $license_id ) {
 		// @todo: decide whether all access pass can be varibale priced if yes then how it will impect code..
 		// @todo: decide whether send this addition license data to only add-ons page of Give core.
+		// @todo discuss with devin that do we agree to deactivate license if it this request will come from non registered site
 		/* @var EDD_SL_License $license */
 		$license = EDD_Software_Licensing::instance()->get_license( $license_id );
 
