@@ -198,6 +198,14 @@ class Give_EDD_Software_Licensing_API_Extended {
 			);
 
 			$response['current_version'] = edd_software_licensing()->get_download_version( $download->ID );
+
+			// Backward compatibility for subscription bundles.
+			$subscription             = $this->subscription_check( array( 'license' => $args['key'] ) );
+			$response['subscription'] = array();
+
+			if ( $subscription['status'] ) {
+				$response['subscription'] = $subscription;
+			}
 		}
 
 		// Set plugin slug if missing.
@@ -284,7 +292,9 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 */
 	private function subscription_check( $data ) {
 		$license_key = urldecode( $data['license'] );
-		$license     = edd_software_licensing()->get_license( $license_key, true );
+
+		/* @var EDD_License $license */
+		$license = edd_software_licensing()->get_license( $license_key, true );
 
 		$subscriptions = array();
 		foreach ( $license->payment_ids as $payment_id ) {
@@ -294,20 +304,24 @@ class Give_EDD_Software_Licensing_API_Extended {
 			}
 		}
 
+		/* @var EDD_License $subscription_license_obj */
+		$subscription_license_obj = edd_software_licensing()->get_license_by_purchase( $payment_id );
+
 		return array(
-			'success'     => ! empty( $subscriptions ),
-			'id'          => ! empty( $subscription['id'] ) ? absint( $subscription['id'] ) : '',
-			'license_key' => $license_key,
-			'status'      => ! empty( $subscription['status'] ) ? $subscription['status'] : '',
-			'expires'     => ! empty( $subscription['expiration'] )
+			'success'          => ! empty( $subscriptions ),
+			'id'               => ! empty( $subscription['id'] ) ? absint( $subscription['id'] ) : '',
+			'license_key'      => $license_key,
+			'subscription_key' => $subscription_license_obj->license_key,
+			'status'           => ! empty( $subscription['status'] ) ? $subscription['status'] : '',
+			'expires'          => ! empty( $subscription['expiration'] )
 				? (
 				is_numeric( $subscription['expiration'] )
 					? date( 'Y-m-d H:i:s', $subscription['expiration'] )
 					: $subscription['expiration']
 				)
 				: '',
-			'payment_id'  => $payment_id,
-			'invoice_url' => urlencode( add_query_arg( 'payment_key', edd_get_payment_key( $payment_id ), edd_get_success_page_uri() ) ),
+			'payment_id'       => $payment_id,
+			'invoice_url'      => urlencode( add_query_arg( 'payment_key', edd_get_payment_key( $payment_id ), edd_get_success_page_uri() ) ),
 		);
 	}
 
