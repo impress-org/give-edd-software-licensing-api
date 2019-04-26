@@ -98,6 +98,88 @@ class Give_EDD_Software_Licensing_API_Extended {
 	public function plugin_setup() {
 		add_filter( 'edd_remote_license_check_response', array( $this, 'remote_license_check' ), 10, 3 );
 		add_action( 'edd_check_subscription', array( $this, 'remote_subscription_check' ) );
+		add_action( 'edd_check_licenses', array( $this, 'remote_licenses_check' ) );
+	}
+
+
+	/**
+	 * Check licenses in bulk
+	 *
+	 * @param $args
+	 */
+	public function remote_licenses_check( $args ) {
+		$defaults = array(
+			'licenses'  => '',
+			'url'       => '',
+		);
+
+		$args             = array_map( 'sanitize_text_field', $args );
+		$args             = wp_parse_args( $args, $defaults );
+		$args['licenses'] = array_map( 'trim', explode( ',', $args['licenses'] ) );
+
+		if ( ! $args['url'] ) {
+
+			// Attempt to grab the URL from the user agent if no URL is specified
+			$domain      = array_map( 'trim', explode( ';', $_SERVER['HTTP_USER_AGENT'] ) );
+			$args['url'] = trim( $domain[1] );
+
+		}
+
+		$response = array();
+
+		if ( $args['licenses'] ) {
+			foreach ( $args['licenses'] as $license ) {
+				$response[ $license ] = array(
+					'check_license' => '',
+					'get_version'   => '',
+				);
+
+				$remote_response = wp_remote_post(
+				// 'https://givewp.com/checkout/',
+					'http://staging.givewp.com/chekout/', // For testing purpose
+					array(
+						'timeout'   => 15,
+						'sslverify' => false,
+						'body'      => array(
+							'edd_action' => 'check_license',
+							'license'    => $license,
+							'url'        => $args['url'],
+						),
+					)
+				);
+
+				$response[ $license ]['check_license'] = ! is_wp_error( $remote_response )
+					? json_decode( wp_remote_retrieve_body( $remote_response ), true )
+					: $remote_response;
+
+				if ( $response[ $license ]['check_license']['success'] ) {
+					$remote_response = wp_remote_post(
+					// 'https://givewp.com/checkout/',
+						'http://staging.givewp.com/chekout/', // For testing purpose
+						array(
+							'timeout'   => 15,
+							'sslverify' => false,
+							'body'      => array(
+								'edd_action' => 'get_version',
+								'license'    => $license,
+								'url'        => $args['url'],
+								'item_name'  => $response[ $license ]['check_license']['item_name'],
+							),
+						)
+					);
+
+					$response[ $license ]['get_version'] = ! is_wp_error( $remote_response )
+						? json_decode( wp_remote_retrieve_body( $remote_response ), true )
+						: $remote_response;
+				}
+			}
+		}
+
+
+		header( 'Content-Type: application/json' );
+		echo wp_json_encode( $response );
+
+		exit;
 	}
 
 
