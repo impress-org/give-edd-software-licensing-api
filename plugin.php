@@ -283,6 +283,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 						$file['plugin_slug']     = basename( $file['file'], '.zip' );
 						$file['file']            = edd_all_access_product_download_url( $included_download->ID, 0, $file['array_index'] );
 						$file['name']            = get_post_field( 'post_title', get_the_ID(), 'raw' );
+						$file['current_version'] = edd_software_licensing()->get_download_version( $included_download->ID );
 						$file['readme']          = get_post_meta( get_the_ID(), '_edd_readme_location', true );
 						$response['download'][]  = $file;
 					}
@@ -306,7 +307,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 				$license->price_id
 			);
 
-			//$response['current_version'] = edd_software_licensing()->get_download_version( $download->ID );
+			$response['current_version'] = edd_software_licensing()->get_download_version( $download->ID );
 			$response['readme']          = get_post_meta( $download->ID, '_edd_readme_location', true );
 			$response['plugin_slug']     = basename( $download_file_info['file'], '.zip' );
 
