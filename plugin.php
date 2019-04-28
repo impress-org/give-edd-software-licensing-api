@@ -256,8 +256,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 						// Override exiting file url with protect download file url.
 						$file['plugin_slug']     = basename( $file['file'], '.zip' );
 						$file['file']            = edd_all_access_product_download_url( $included_download->ID, 0, $file['array_index'] );
-						//$file['current_version'] = edd_software_licensing()->get_download_version( $included_download->ID );
-						$file['name']            = str_replace( ' ', '-', strtolower( get_post_field( 'post_title', get_the_ID(), 'raw' ) ) );
+						$file['name']            = get_post_field( 'post_title', get_the_ID(), 'raw' );
 						$file['readme']          = get_post_meta( get_the_ID(), '_edd_readme_location', true );
 						$response['download'][]  = $file;
 					}
