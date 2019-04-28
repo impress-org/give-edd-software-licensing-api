@@ -135,8 +135,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 				);
 
 				$remote_response = wp_remote_post(
-				// 'https://givewp.com/checkout/',
-					'http://staging.givewp.com/chekout/', // For testing purpose
+					home_url( '/checkout/' ),
 					array(
 						'timeout'   => 15,
 						'sslverify' => false,
@@ -154,8 +153,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 
 				if ( $response[ $license ]['check_license']['success'] ) {
 					$remote_response = wp_remote_post(
-					// 'https://givewp.com/checkout/',
-						'http://staging.givewp.com/chekout/', // For testing purpose
+						home_url( '/checkout/' ),
 						array(
 							'timeout'   => 15,
 							'sslverify' => false,
