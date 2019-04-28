@@ -131,7 +131,8 @@ class Give_EDD_Software_Licensing_API_Extended {
 			foreach ( $args['licenses'] as $license ) {
 				$response[ $license ] = array(
 					'check_license' => '',
-					'get_version'   => '',
+					'get_version'   => array(),
+					'get_versions'  => array(),
 				);
 
 				$remote_response = wp_remote_post(
@@ -152,23 +153,48 @@ class Give_EDD_Software_Licensing_API_Extended {
 					: $remote_response;
 
 				if ( $response[ $license ]['check_license']['success'] ) {
-					$remote_response = wp_remote_post(
-						home_url( '/checkout/' ),
-						array(
-							'timeout'   => 15,
-							'sslverify' => false,
-							'body'      => array(
-								'edd_action' => 'get_version',
-								'license'    => $license,
-								'url'        => $args['url'],
-								'item_name'  => $response[ $license ]['check_license']['item_name'],
-							),
-						)
-					);
+					if( $response[ $license ]['check_license']['is_all_access_pass'] ){
+						foreach ( $response[ $license ]['check_license']['download'] as $download ) {
+							$remote_response = wp_remote_post(
+								home_url( '/checkout/' ),
+								array(
+									'timeout'   => 15,
+									'sslverify' => false,
+									'body'      => array(
+										'edd_action' => 'get_version',
+										'license'    => $license,
+										'url'        => $args['url'],
+										'item_name'  => $download['name'],
+										'slug'       => $download['plugin_slug'],
+									)
+								)
+							);
 
-					$response[ $license ]['get_version'] = ! is_wp_error( $remote_response )
-						? json_decode( wp_remote_retrieve_body( $remote_response ), true )
-						: $remote_response;
+							$response[ $license ]['get_versions'][] = ! is_wp_error( $remote_response )
+								? json_decode( wp_remote_retrieve_body( $remote_response ), true )
+								: $remote_response;
+						}
+
+					} else{
+						$remote_response = wp_remote_post(
+							home_url( '/checkout/' ),
+							array(
+								'timeout'   => 15,
+								'sslverify' => false,
+								'body'      => array(
+									'edd_action' => 'get_version',
+									'license'    => $license,
+									'url'        => $args['url'],
+									'item_name'  => $response[ $license ]['check_license']['item_name'],
+									'slug'       => $response[ $license ]['check_license']['plugin_slug'],
+								),
+							)
+						);
+
+						$response[ $license ]['get_version'] = ! is_wp_error( $remote_response )
+							? json_decode( wp_remote_retrieve_body( $remote_response ), true )
+							: $remote_response;
+					}
 				}
 			}
 		}
