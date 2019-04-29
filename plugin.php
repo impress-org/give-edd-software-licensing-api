@@ -681,3 +681,5 @@ add_action(
 		'plugin_setup',
 	)
 );
+
+// @todo : copied few function to decrease response time. discuss this with response time
