@@ -94,6 +94,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 * @wp-hook plugins_loaded
 	 */
 	public function plugin_setup() {
+		add_filter( 'edd_sl_license_response', array( $this, 'additional_license_response_checks' ), 10, 1 );
 		add_filter( 'edd_remote_license_check_response', array( $this, 'additional_license_checks' ), 10, 3 );
 		add_action( 'edd_check_subscription', array( $this, 'remote_subscription_check' ) );
 		add_action( 'edd_check_licenses', array( $this, 'remote_licenses_check' ) );
@@ -577,6 +578,43 @@ class Give_EDD_Software_Licensing_API_Extended {
 
 			return $download_file;
 		}
+	}
+
+
+	/**
+	 * Get version query additional checks
+	 *
+	 * @param array $response
+	 *
+	 * @return array
+	 */
+	public function additional_license_response_checks( $response ) {
+		$license = sanitize_text_field( $_REQUEST['license'] );
+		$license = edd_software_licensing()->get_license( $license );
+		$url     = isset( $_REQUEST['url'] ) ? urldecode( $_REQUEST['url'] ) : '';
+
+		if ( empty( $url ) ) {
+
+			// Attempt to grab the URL from the user agent if no URL is specified
+			$domain = array_map( 'trim', explode( ';', $_SERVER['HTTP_USER_AGENT'] ) );
+			$url    = trim( $domain[1] );
+
+		}
+
+		if ( $license && ! $license->is_site_active( $url ) ) {
+			$response  = array(
+				'new_version'    => '',
+				'stable_version' => '',
+				'sections'       => '',
+				'license_check'  => '',
+				'msg'            => __( 'Site not active' ),
+			);
+
+			echo json_encode( $response );
+			exit;
+		}
+
+		return $response;
 	}
 
 	/**
