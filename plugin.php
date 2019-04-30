@@ -391,7 +391,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 								)
 							);
 
-							$response[ $license ]['get_versions'][] = $remote_response;
+							$response[ $license ]['get_versions'][] = $remote_response['new_version'] ? $remote_response : array();
 						}
 					} else {
 						$remote_response = $this->get_latest_version_remote_copy(
@@ -404,7 +404,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 							)
 						);
 
-						$response[ $license ]['get_version'] = $remote_response;
+						$response[ $license ]['get_version'] =  $remote_response['new_version'] ? $remote_response : array();
 					}
 				}
 			}
