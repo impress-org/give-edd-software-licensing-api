@@ -98,6 +98,8 @@ class Give_EDD_Software_Licensing_API_Extended {
 		add_filter( 'edd_remote_license_check_response', array( $this, 'additional_license_checks' ), 10, 3 );
 		add_action( 'edd_check_subscription', array( $this, 'remote_subscription_check' ) );
 		add_action( 'edd_check_licenses', array( $this, 'remote_licenses_check' ) );
+		add_action( 'edd_get_addons_info', array( $this, 'remote_get_addons_info' ) );
+		add_filter( 'edd_sl_get_addon_info', 'edd_sl_readme_modify_license_response', 10, 3 );
 	}
 
 	/**
@@ -223,6 +225,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 
 			if ( empty( $license ) && empty( $item_name ) ) {
 				$response['msg'] = __( 'No item provided', 'edd_sl' );
+
 				return $response;
 			}
 
@@ -404,7 +407,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 							)
 						);
 
-						$response[ $license ]['get_version'] =  $remote_response['new_version'] ? $remote_response : array();
+						$response[ $license ]['get_version'] = $remote_response['new_version'] ? $remote_response : array();
 					}
 				}
 			}
@@ -602,7 +605,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 		}
 
 		if ( $license && ! $license->is_site_active( $url ) ) {
-			$response  = array(
+			$response = array(
 				'new_version'    => '',
 				'stable_version' => '',
 				'sections'       => '',
@@ -706,6 +709,82 @@ class Give_EDD_Software_Licensing_API_Extended {
 			)
 		);
 
+		exit;
+	}
+
+
+	/**
+	 * Get addons information
+	 */
+	public function remote_get_addons_info() {
+		$addon_list = array_map( function ( $addon_name ) {
+			return trim( sanitize_text_field( rawurldecode( $addon_name ) ) );
+		}, explode( ',', $_REQUEST['addons'] ) );
+
+
+		$addon_list = $addon_list ? array_filter( $addon_list ) : array();
+
+
+		$response = array();
+
+		// set content type of response
+		header( 'Content-Type: application/json' );
+
+		if ( ! $addon_list ) {
+			$response['msg'] = __( 'No item provided', 'edd_sl' );
+			echo json_encode( $response );
+			exit;
+		}
+
+		foreach ( $addon_list as $item_name ) {
+			$item_id = edd_software_licensing()->get_download_id_by_name( $item_name );
+
+			$download = new EDD_SL_Download( $item_id );
+
+			if ( ! $download->ID ) {
+				continue;
+			}
+
+			$file           = $this->get_latest_release( $download->files );
+			$plugin_slug    = basename( $file['file'], '.zip' );
+			$stable_version = $version = edd_software_licensing()->get_latest_version( $item_id );
+			$description    = ! empty( $download->post_excerpt ) ? $download->post_excerpt : $download->post_content;
+			$changelog      = $download->get_changelog();
+
+			$tmp = array(
+				'new_version'      => $version,
+				'stable_version'   => $stable_version,
+				'plugin_shortname' => $item_name,
+				'name'             => $download->post_title,
+				'slug'             => $download->post_name,
+				'plugin_slug'      => $plugin_slug,
+				'homepage'         => get_permalink( $item_id ),
+				'sections'         => serialize(
+					array(
+						'description' => wpautop( strip_tags( $description, '<p><li><ul><ol><strong><a><em><span><br>' ) ),
+						'changelog'   => wpautop( strip_tags( stripslashes( $changelog ), '<p><li><ul><ol><strong><a><em><span><br>' ) ),
+					)
+				),
+			);
+
+			$tmp = apply_filters( 'edd_sl_get_addon_info', $tmp, $download );
+
+			/**
+			 * Encode any emoji in the name and sections.
+			 *
+			 * @see   https://github.com/easydigitaldownloads/EDD-Software-Licensing/issues/1313
+			 */
+			if ( function_exists( 'wp_encode_emoji' ) ) {
+				$tmp['name'] = wp_encode_emoji( $tmp['name'] );
+
+				$sections        = maybe_unserialize( $tmp['sections'] );
+				$tmp['sections'] = serialize( array_map( 'wp_encode_emoji', $sections ) );
+			}
+
+			$response[] = $tmp;
+		}
+
+		echo json_encode( $response );
 		exit;
 	}
 }
