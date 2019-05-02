@@ -433,6 +433,8 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 * @todo  : return result only if source set to give or something else because we do not want to sent extra information on every license check
 	 */
 	public function additional_license_checks( $response, $args, $license_id ) {
+		global $post;
+
 		// @todo: decide whether all access pass can be varibale priced if yes then how it will impect code..
 		// @todo: decide whether send this addition license data to only add-ons page of Give core.
 		// @todo discuss with devin that do we agree to deactivate license if it this request will come from non registered site
@@ -486,6 +488,8 @@ class Give_EDD_Software_Licensing_API_Extended {
 				// print_r( $included_downloads );
 
 				if ( $included_downloads->have_posts() ) {
+					$tmp_post = $post;
+
 					while ( $included_downloads->have_posts() ) {
 						$included_downloads->the_post();
 
@@ -502,6 +506,8 @@ class Give_EDD_Software_Licensing_API_Extended {
 						$response['download'][]  = $file;
 					}
 
+					// Temporary hack: some global $post keep remain to last item in loop which set wrong item name to last license.
+					$post = $tmp_post;
 					wp_reset_postdata();
 				}
 			}
