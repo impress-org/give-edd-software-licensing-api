@@ -3,8 +3,8 @@
  * Plugin Name: Give EDD Software Licensing API Extended
  * Plugin URI: https://givewp.com
  * Description: Add more api endpoints for Easy Digital Downloads - Software Licenses.
- * Author: WordImpress
- * Author URI: https://wordimpress.com
+ * Author: GiveWP
+ * Author URI: https://givewp.com
  * Version: 0.2
  *
  * Give EDD Software Licensing API Extended is free software: you can redistribute it and/or modify
@@ -28,17 +28,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! defined( 'GIVE_EDD_SL_API_EXTENDED_PLUGIN_DIR' ) ) {
-	define( 'GIVE_EDD_SL_API_EXTENDED_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
-}
-
-if ( ! defined( 'GIVE_EDD_SL_API_EXTENDED_PLUGIN_URL' ) ) {
-	define( 'GIVE_EDD_SL_API_EXTENDED_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-}
-
 if ( ! defined( 'GIVE_EDD_SL_API_EXTENDED_PLUGIN_FILE' ) ) {
 	define( 'GIVE_EDD_SL_API_EXTENDED_PLUGIN_FILE', __FILE__ );
 }
+
+if ( ! defined( 'GIVE_EDD_SL_API_EXTENDED_PLUGIN_DIR' ) ) {
+	define( 'GIVE_EDD_SL_API_EXTENDED_PLUGIN_DIR', plugin_dir_path( GIVE_EDD_SL_API_EXTENDED_PLUGIN_FILE ) );
+}
+
+if ( ! defined( 'GIVE_EDD_SL_API_EXTENDED_PLUGIN_URL' ) ) {
+	define( 'GIVE_EDD_SL_API_EXTENDED_PLUGIN_URL', plugin_dir_url( GIVE_EDD_SL_API_EXTENDED_PLUGIN_FILE ) );
+}
+
 
 // Do nothing if EDD Software Licensing plugin is not activated.
 $active_plugins = array_map( 'strtolower', get_option( 'active_plugins', array() ) );
