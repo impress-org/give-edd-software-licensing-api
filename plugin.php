@@ -498,11 +498,11 @@ class Give_EDD_Software_Licensing_API_Extended {
 
 						// @todo by default this function set price id to default variable price if any . revalidate this if it will create any issue or not
 						// Override exiting file url with protect download file url.
-						$file['plugin_slug']     = basename( $file['file'], '.zip' );
+						$file['readme']          = get_post_meta( get_the_ID(), '_edd_readme_location', true );
+						$file['plugin_slug']     = basename( dirname( $file['readme'] ) );
 						$file['file']            = edd_all_access_product_download_url( $included_download->ID, 0, $file['array_index'] );
 						$file['name']            = get_post_field( 'post_title', get_the_ID(), 'raw' );
 						$file['current_version'] = edd_software_licensing()->get_download_version( $included_download->ID );
-						$file['readme']          = get_post_meta( get_the_ID(), '_edd_readme_location', true );
 						$response['download'][]  = $file;
 					}
 
@@ -529,7 +529,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 
 			$response['current_version'] = edd_software_licensing()->get_download_version( $download->ID );
 			$response['readme']          = get_post_meta( $download->ID, '_edd_readme_location', true );
-			$response['plugin_slug']     = basename( $download_file_info['file'], '.zip' );
+			$response['plugin_slug']     = basename( dirname( $response['readme'] ) );
 
 			// Backward compatibility for subscription bundles.
 			$subscription             = $this->subscription_check( array( 'license' => $args['key'] ) );
