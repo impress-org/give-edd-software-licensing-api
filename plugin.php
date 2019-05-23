@@ -265,7 +265,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 		}
 
 		$stable_version = $version = edd_software_licensing()->get_latest_version( $item_id );
-		$slug           = ! empty( $slug ) ? $slug : $download->post_name;
+		$slug           = ! empty( $slug ) ? $slug :basename( dirname( get_post_meta( $download->ID, '_edd_readme_location', true ) ) );
 		$description    = ! empty( $download->post_excerpt ) ? $download->post_excerpt : $download->post_content;
 		$changelog      = $download->get_changelog();
 
@@ -345,13 +345,15 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 */
 	public function remote_licenses_check( $args ) {
 		$defaults = array(
-			'licenses' => '',
-			'url'      => '',
+			'licenses'   => '',
+			'unlicensed' => '',
+			'url'        => '',
 		);
 
-		$args             = array_map( 'sanitize_text_field', $args );
-		$args             = wp_parse_args( $args, $defaults );
-		$args['licenses'] = array_map( 'trim', explode( ',', $args['licenses'] ) );
+		$args               = array_map( 'sanitize_text_field', $args );
+		$args               = wp_parse_args( $args, $defaults );
+		$args['licenses']   = ! empty( $args['licenses'] ) ? array_map( 'trim', explode( ',', $args['licenses'] ) ) : '';
+		$args['unlicensed'] = ! empty( $args['unlicensed'] ) ? array_map( 'trim', explode( ',', $args['unlicensed'] ) ) : '';
 
 		if ( ! $args['url'] ) {
 
@@ -410,6 +412,21 @@ class Give_EDD_Software_Licensing_API_Extended {
 						$response[ $license ]['get_version'] = $remote_response['new_version'] ? $remote_response : array();
 					}
 				}
+			}
+		}
+
+		if ( $args['unlicensed'] ) {
+			foreach ( $args['unlicensed'] as $addon ) {
+				$remote_response = $this->get_latest_version_remote_copy(
+					array(
+						'edd_action' => 'get_version',
+						'url'        => $args['url'],
+						'item_name'  => $addon,
+						//'slug'       => $response[ $license ]['check_license']['plugin_slug'],
+					)
+				);
+
+				$response[sanitize_title($addon)] = $remote_response['new_version'] ? $remote_response : array();
 			}
 		}
 
