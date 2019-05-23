@@ -244,6 +244,26 @@ class Give_EDD_Software_Licensing_API_Extended {
 
 		$download = new EDD_SL_Download( $item_id );
 
+		// @todo: Maybe need to search by title.
+		if( ! $download->ID ) {
+			$the_query = new WP_Query(array(
+				's' => $item_name,
+				'posts_per_page' => 1
+			) );
+
+			// The Loop
+			if ( $the_query->have_posts() ) {
+
+				while ( $the_query->have_posts() ) {
+					$the_query->the_post();
+
+					$download = new EDD_SL_Download( get_the_ID() );
+				}
+
+				wp_reset_postdata();
+			}
+		}
+
 		if ( ! $download ) {
 
 			if ( empty( $license ) || $check_by_name_first ) {
