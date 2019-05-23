@@ -246,9 +246,11 @@ class Give_EDD_Software_Licensing_API_Extended {
 
 		// @todo: Maybe need to search by title.
 		if( ! $download->ID ) {
-			$the_query = new WP_Query(array(
-				's' => $item_name,
-				'posts_per_page' => 1
+			$the_query = new WP_Query( array(
+				's'              => $item_name,
+				'posts_per_page' => 1,
+				'posy_type'      => 'download',
+				'post_status'    => 'publish',
 			) );
 
 			// The Loop
