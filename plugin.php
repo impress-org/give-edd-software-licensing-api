@@ -372,10 +372,11 @@ class Give_EDD_Software_Licensing_API_Extended {
 			'url'        => '',
 		);
 
-		$args               = array_map( 'sanitize_text_field', $args );
-		$args               = wp_parse_args( $args, $defaults );
-		$args['licenses']   = ! empty( $args['licenses'] ) ? array_map( 'trim', explode( ',', $args['licenses'] ) ) : '';
-		$args['unlicensed'] = ! empty( $args['unlicensed'] ) ? array_map( 'trim', explode( ',', $args['unlicensed'] ) ) : '';
+		$args                = array_map( 'sanitize_text_field', $args );
+		$args                = wp_parse_args( $args, $defaults );
+		$args['licenses']    = ! empty( $args['licenses'] ) ? array_map( 'trim', explode( ',', $args['licenses'] ) ) : '';
+		$args['unlicensed']  = ! empty( $args['unlicensed'] ) ? array_map( 'trim', explode( ',', $args['unlicensed'] ) ) : '';
+		$skip_licensed_addon = array();
 
 		if ( ! $args['url'] ) {
 
@@ -418,7 +419,12 @@ class Give_EDD_Software_Licensing_API_Extended {
 								)
 							);
 
-							$response[ $license ]['get_versions'][] = $remote_response['new_version'] ? $remote_response : array();
+							if ( ! $remote_response['new_version'] ) {
+								continue;
+							}
+
+							$response[ $license ]['get_versions'][] = $remote_response;
+							$skip_licensed_addon[]                  = $remote_response['slug'];
 						}
 					} else {
 						$remote_response = $this->get_latest_version_remote_copy(
@@ -431,13 +437,20 @@ class Give_EDD_Software_Licensing_API_Extended {
 							)
 						);
 
-						$response[ $license ]['get_version'] = $remote_response['new_version'] ? $remote_response : array();
+						if ( ! $remote_response['new_version'] ) {
+							continue;
+						}
+
+						$response[ $license ]['get_version'] = $remote_response;
+						$skip_licensed_addon[]               = $remote_response['slug'];
 					}
 				}
 			}
 		}
 
 		if ( $args['unlicensed'] ) {
+			$skip_licensed_addon = array_filter( $skip_licensed_addon );
+
 			foreach ( $args['unlicensed'] as $addon ) {
 				$remote_response = $this->get_latest_version_remote_copy(
 					array(
@@ -448,7 +461,14 @@ class Give_EDD_Software_Licensing_API_Extended {
 					)
 				);
 
-				$response[sanitize_title($addon)] = $remote_response['new_version'] ? $remote_response : array();
+				if (
+					! $remote_response['new_version']
+					|| in_array( $remote_response['slug'], $skip_licensed_addon )
+				) {
+					continue;
+				}
+
+				$response[ sanitize_title( $addon ) ] = $remote_response;
 			}
 		}
 
