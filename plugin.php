@@ -591,12 +591,13 @@ class Give_EDD_Software_Licensing_API_Extended {
 			$response['plugin_slug']     = basename( dirname( $response['readme'] ) );
 
 			// Backward compatibility for subscription bundles.
-			$subscription             = $this->subscription_check( array( 'license' => $args['key'] ) );
-			$response['subscription'] = array();
+			// @todo: as per devin, we should only check for license date instead of subscription date.
+			//$subscription             = $this->subscription_check( array( 'license' => $args['key'] ) );
+			// $response['subscription'] = array();
 
-			if ( $subscription['status'] ) {
-				$response['subscription'] = $subscription;
-			}
+			// if ( $subscription['status'] ) {
+			// 	$response['subscription'] = $subscription;
+			// }
 		}
 
 		// Set plugin slug if missing.
