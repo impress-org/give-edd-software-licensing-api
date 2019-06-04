@@ -96,6 +96,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 */
 	public function plugin_setup() {
 		add_filter( 'edd_sl_license_response', array( $this, 'additional_license_response_checks' ), 10, 1 );
+		add_filter( 'edd_sl_license_response', array( $this, 'acf_custom_thumbs_for_icons' ), 11, 2 );
 		add_filter( 'edd_remote_license_check_response', array( $this, 'additional_license_checks' ), 10, 3 );
 		add_action( 'edd_check_subscription', array( $this, 'remote_subscription_check' ) );
 		add_action( 'edd_check_licenses', array( $this, 'remote_licenses_check' ) );
@@ -684,6 +685,32 @@ class Give_EDD_Software_Licensing_API_Extended {
 		}
 
 		return $response;
+	}
+
+	/**
+	 * Use the ACF custom field for plugin update thumbnail images.
+	 *
+	 * This allows us to use the feature image option for the download post type for the add-on listing page and on single downloads and doesn't restrict us to a square size.
+	 *
+	 * @param array $response
+	 * @param EDD_Download $download
+	 *
+	 * @return array $response
+	 */
+	public function acf_custom_thumbs_for_icons( $response, $download ) {
+
+		$featured_lowres = get_field( 'download_image', $download->ID );
+		$featured_highres = get_field( 'download_image_highres', $download->ID );
+
+		if( is_array( $featured_lowres ) ) {
+			$response['icons']['x1'] = $featured_lowres['sizes']['sl-small'];
+			$response['icons']['x2'] = $featured_highres['sizes']['sl-large'];
+
+			$response['icons'] = serialize( $response['icons'] );
+		}
+
+		return $response;
+
 	}
 
 	/**
