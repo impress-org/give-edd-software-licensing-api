@@ -245,13 +245,15 @@ class Give_EDD_Software_Licensing_API_Extended {
 		$download = new EDD_SL_Download( $item_id );
 
 		// @todo: Maybe need to search by title.
-		if( ! $download->ID ) {
-			$the_query = new WP_Query( array(
-				's'              => $item_name,
-				'posts_per_page' => 1,
-				'posy_type'      => 'download',
-				'post_status'    => 'publish',
-			) );
+		if ( ! $download->ID ) {
+			$the_query = new WP_Query(
+				array(
+					's'              => $item_name,
+					'posts_per_page' => 1,
+					'posy_type'      => 'download',
+					'post_status'    => 'publish',
+				)
+			);
 
 			// The Loop
 			if ( $the_query->have_posts() ) {
@@ -287,7 +289,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 		}
 
 		$stable_version = $version = edd_software_licensing()->get_latest_version( $item_id );
-		$slug           = ! empty( $slug ) ? $slug :basename( dirname( get_post_meta( $download->ID, '_edd_readme_location', true ) ) );
+		$slug           = ! empty( $slug ) ? $slug : basename( dirname( get_post_meta( $download->ID, '_edd_readme_location', true ) ) );
 		$description    = ! empty( $download->post_excerpt ) ? $download->post_excerpt : $download->post_content;
 		$changelog      = $download->get_changelog();
 
@@ -457,7 +459,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 						'edd_action' => 'get_version',
 						'url'        => $args['url'],
 						'item_name'  => $addon,
-						//'slug'       => $response[ $license ]['check_license']['plugin_slug'],
+						// 'slug'       => $response[ $license ]['check_license']['plugin_slug'],
 					)
 				);
 
@@ -545,7 +547,6 @@ class Give_EDD_Software_Licensing_API_Extended {
 				);
 
 				// print_r( $included_downloads );
-
 				if ( $included_downloads->have_posts() ) {
 					$tmp_post = $post;
 
@@ -592,11 +593,10 @@ class Give_EDD_Software_Licensing_API_Extended {
 
 			// Backward compatibility for subscription bundles.
 			// @todo: as per devin, we should only check for license date instead of subscription date.
-			//$subscription             = $this->subscription_check( array( 'license' => $args['key'] ) );
+			// $subscription             = $this->subscription_check( array( 'license' => $args['key'] ) );
 			// $response['subscription'] = array();
-
 			// if ( $subscription['status'] ) {
-			// 	$response['subscription'] = $subscription;
+			// $response['subscription'] = $subscription;
 			// }
 		}
 
