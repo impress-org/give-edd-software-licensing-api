@@ -699,7 +699,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 */
 	public function acf_custom_thumbs_for_icons( $response, $download ) {
 
-		$featured_lowres = get_field( 'download_image', $download->ID );
+		$featured_lowres = get_field( 'download_icon', $download->ID );
 
 		if( is_array( $featured_lowres ) ) {
 			$response['icons']['x1'] = $featured_lowres['sizes']['sl-small'];
