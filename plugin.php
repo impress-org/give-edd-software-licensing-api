@@ -99,7 +99,6 @@ class Give_EDD_Software_Licensing_API_Extended {
 		add_filter( 'edd_remote_license_check_response', array( $this, 'additional_license_checks' ), 10, 3 );
 		add_action( 'edd_check_subscription', array( $this, 'remote_subscription_check' ) );
 		add_action( 'edd_check_licenses', array( $this, 'remote_licenses_check' ) );
-		add_filter( 'edd_sl_get_addon_info', 'edd_sl_readme_modify_license_response', 10, 3 );
 	}
 
 	/**
