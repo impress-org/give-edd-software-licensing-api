@@ -624,8 +624,9 @@ class Give_EDD_Software_Licensing_API_Extended {
 		 */
 		foreach ( $download_files as $index => $download_file ) {
 			// @todo: currently we are only check if url contain does not contain any version number if not then it will be latest release url. revalidate it.
+			// We are assuming that url will be like http://xyz.com/downloads/plugins/give-manual-donations-1.3.2.zip, in this case we will get "-1." as selection.
 			$zip_filename = basename( $download_file['file'] );
-			preg_match( '/-d/', $zip_filename, $version_number_part );
+			preg_match( '/-\d[.]/', $zip_filename, $version_number_part );
 
 			// Must be a give addon.
 			if (
