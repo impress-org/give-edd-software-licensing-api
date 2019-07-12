@@ -569,6 +569,9 @@ class Give_EDD_Software_Licensing_API_Extended {
 
 			// Bailout: verify if we are looking at give addon or others.
 			if ( ! $download_file_info ) {
+				// It prevent activation of deprecated add-on but valid license key.
+				$response['success'] = false;
+
 				return $response;
 			}
 
