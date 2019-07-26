@@ -102,8 +102,21 @@ class Give_EDD_Software_Licensing_API_Extended {
 	}
 
 	/**
+	 * Used by get_request_checksum to sort the array by size.
+	 * Note: this function copied from EDD_Software_Licensing to decrease response time when do bulk licenses check
+	 * @since 3.5
+	 * @param string $a The first item to compare for length.
+	 * @param string $b The second item to compare for length.
+	 *
+	 * @return int The difference in length.
+	 */
+	private function sort_args_by_length( $a,$b ) {
+		return strlen( $b ) - strlen( $a );
+	}
+
+	/**
 	 * Given an array of arguments, sort them by length, and then md5 them to generate a checksum.
-	 * Note: this function copied from EDD_Software_Licensing to descrease response time when do bulk licenses check
+	 * Note: this function copied from EDD_Software_Licensing to decrease response time when do bulk licenses check
 	 *
 	 * @param array $args
 	 *
