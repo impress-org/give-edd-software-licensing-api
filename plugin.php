@@ -99,18 +99,41 @@ class Give_EDD_Software_Licensing_API_Extended {
 		add_filter( 'edd_remote_license_check_response', array( $this, 'additional_license_checks' ), 10, 3 );
 		add_action( 'edd_check_subscription', array( $this, 'remote_subscription_check' ) );
 		add_action( 'edd_check_licenses', array( $this, 'remote_licenses_check' ) );
+
+		/**
+		 * Update data on lumen server handler
+		 */
+
+		// Check class-sl-license.php for this hooks.
+		$sl_license_filters = array(
+			'edd_sl_post_set_status',
+			'edd_sl_post_set_expiration',
+			'edd_sl_post_license_renewal',
+			'edd_sl_post_set_activation_limit',
+			'edd_sl_post_set_lifetime'
+		);
+
+		foreach ( $sl_license_filters as $sl_license_filter ){
+			add_action( $sl_license_filter, array( $this, 'setup_lumen_license_webhook_job' ), 10, 1 );
+		}
+
+		add_action( 'save_post_download', array( $this, 'setup_lumen_addon_webhook_job' ), 10, 1 );
+
+		add_action( 'give_edd_handle_addon_lumen_trigger', array( $this, 'trigger_lumen_addon_webhook' ), 10, 1 );
+		add_action( 'give_edd_handle_license_lumen_trigger', array( $this, 'trigger_lumen_license_webhook' ), 10, 1 );
 	}
 
 	/**
 	 * Used by get_request_checksum to sort the array by size.
 	 * Note: this function copied from EDD_Software_Licensing to decrease response time when do bulk licenses check
-	 * @since 3.5
+	 *
 	 * @param string $a The first item to compare for length.
 	 * @param string $b The second item to compare for length.
 	 *
 	 * @return int The difference in length.
+	 * @since 3.5
 	 */
-	private function sort_args_by_length( $a,$b ) {
+	private function sort_args_by_length( $a, $b ) {
 		return strlen( $b ) - strlen( $a );
 	}
 
@@ -787,6 +810,152 @@ class Give_EDD_Software_Licensing_API_Extended {
 		);
 
 		exit;
+	}
+
+	/**
+	 * Setup license lumen webhook job
+	 *
+	 * @param int $license_id
+	 *
+	 * @return bool
+	 */
+	function setup_lumen_license_webhook_job( $license_id ) {
+		$license = edd_software_licensing()->get_license( $license_id );
+
+
+		// Exit.
+		if(
+			! $license
+			|| $license->get_child_licenses() // do not process parent of group of license.
+		) {
+			return false;
+		}
+
+		// Setup a background job.
+		wp_schedule_single_event( time() - 5, 'give_edd_handle_license_lumen_trigger', array( $license->key ) );
+	}
+
+	/**
+	 * Setup add-on lumen webhook job
+	 *
+	 * @param int $download_id
+	 */
+	function setup_lumen_addon_webhook_job( $download_id ) {
+		// Setup a background job.
+		wp_schedule_single_event( time() - 5, 'give_edd_handle_addon_lumen_trigger', array( $download_id ) );
+	}
+
+	/**
+	 * Trigger license lumen webhook job
+	 *
+	 * @param string $license_key
+	 *
+	 * @return bool
+	 */
+	public function trigger_lumen_license_webhook( $license_key ) {
+		$token = $this->get_lumen_token();
+
+		// Exit.
+		if ( empty( $token ) ) {
+			return false;
+		}
+
+		wp_remote_post(
+			$this->get_lumen_api_uri('update-license' ),
+			array(
+				'timeout'   => 15,
+				'body' => array(
+					'license' => $license_key,
+					'token' => $token
+				)
+			)
+		);
+	}
+
+	/**
+	 * Trigger add-on lumen webhook job
+	 *
+	 * @param int $download_id
+	 *
+	 * @return bool
+	 */
+	public function trigger_lumen_addon_webhook( $download_id ) {
+		$token = $this->get_lumen_token();
+
+		// Exit.
+		if ( empty( $token ) ) {
+			return false;
+		}
+
+		wp_remote_post(
+			$this->get_lumen_api_uri('update-addon' ),
+			array(
+				'timeout'   => 15,
+				'body' => array(
+					'addon' => get_the_title( $download_id ),
+					'token' => $token
+				)
+			)
+		);
+	}
+
+
+	/**
+	 * Get token from lumen to make safe requests
+	 *
+	 * @return string
+	 */
+	private function get_lumen_token() {
+		$token = '';
+
+		$response = wp_remote_post(
+			$this->get_lumen_api_uri( 'auth' ),
+			array(
+				'body'    => array(
+					'email'    => LUMEN_USER_EMAIL,
+					'password' => LUMEN_USER_PASSWORD,
+				),
+				'timeout' => 15
+			)
+		);
+
+		if ( ! is_wp_error( $response ) ) {
+			$response = json_decode( wp_remote_retrieve_body( $response ), true );
+			$token    = ! empty( $response['token'] ) ? $response['token'] : '';
+		}
+
+		return $token;
+	}
+
+	/**
+	 * Get lumen api uri
+	 *
+	 * @param string $type
+	 *
+	 * @return string
+	 */
+	private function get_lumen_api_uri( $type = '' ) {
+		$url = LUMEN_SERVER_URI;
+
+		switch ( $type ) {
+			case 'auth':
+				$url = "{$url}/auth/login";
+				break;
+
+			case 'update-license':
+				$url = "{$url}/update/license";
+				break;
+
+			case 'update-addon':
+				$url = "{$url}/update/addon";
+				break;
+
+			case 'update-subscription':
+				$url = "{$url}/update/subscription";
+				break;
+		}
+
+		return $url;
 	}
 }
 
