@@ -117,6 +117,10 @@ class Give_EDD_Software_Licensing_API_Extended {
 			add_action( $sl_license_filter, array( $this, 'setup_lumen_license_webhook_job' ), 10, 1 );
 		}
 
+		add_action( 'edd_deactivate_site', array( $this, 'setup_lumen_license_webhook_job_when_deactivate_site' ), 5 );
+		add_action( 'edd_insert_site', array( $this, 'setup_lumen_license_webhook_job_when_add_site' ), 5 );
+
+
 		add_action( 'save_post_download', array( $this, 'setup_lumen_addon_webhook_job' ), 10, 1 );
 
 		add_action( 'give_edd_handle_addon_lumen_trigger', array( $this, 'trigger_lumen_addon_webhook' ), 10, 1 );
@@ -833,6 +837,81 @@ class Give_EDD_Software_Licensing_API_Extended {
 
 		// Setup a background job.
 		wp_schedule_single_event( time() - 5, 'give_edd_handle_license_lumen_trigger', array( $license->key ) );
+
+		return true;
+	}
+
+	/**
+	 * Setup license lumen webhook job when deactivate site
+	 *
+	 * @return bool
+	 */
+	public function setup_lumen_license_webhook_job_when_deactivate_site(){
+		if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'edd_deactivate_site_nonce' ) ) {
+			return false;
+		}
+
+		$license_id = absint( $_GET['license'] );
+		$license    = edd_software_licensing()->get_license( $license_id );
+
+		if ( $license_id !== $license->ID ) {
+			return false;
+		}
+
+		if (
+			( is_admin() && ! current_user_can( 'manage_licenses' ) )
+			|| ( ! is_admin() && $license->user_id != get_current_user_id() )
+		) {
+			return false;
+		}
+
+		$site_url = ! empty( $_GET['site_url'] ) ? urldecode( $_GET['site_url'] ) : false;
+		$site_id  = ! empty( $_GET['site_id'] ) ? absint( $_GET['site_id'] ) : false;
+
+		if ( empty( $site_url ) && empty( $site_id ) ) {
+			return false;
+		}
+
+		$this->setup_lumen_license_webhook_job( $license_id );
+
+		return true;
+	}
+
+	/**
+	 * Setup license lumen webhook job when add site
+	 *
+	 * @return bool
+	 */
+	public function setup_lumen_license_webhook_job_when_add_site(){
+		if ( ! wp_verify_nonce( $_POST['edd_add_site_nonce'], 'edd_add_site_nonce' ) ) {
+			return false;
+		}
+
+		if ( ! empty( $_POST['license_id'] ) && empty( $_POST['license'] ) ) {
+			// In 3.5, we switched from checking for license_id to just license. Fallback check for backwards compatibility
+			$_POST['license'] = $_POST['license_id'];
+		}
+
+		$license_id  = absint( $_POST['license'] );
+		$license     = edd_software_licensing()->get_license( $license_id );
+		if ( $license_id !== $license->ID ) {
+			return false;
+		}
+
+		if (
+			( is_admin() && ! current_user_can( 'manage_licenses'  ) )
+			|| ( ! is_admin() && $license->user_id != get_current_user_id() )
+		) {
+			return false;
+		}
+
+		if ( $license->is_at_limit() && ! current_user_can( 'manage_licenses' ) ) {
+			return false;
+		}
+
+		$this->setup_lumen_license_webhook_job( $license_id );
+
+		return true;
 	}
 
 	/**
@@ -968,3 +1047,13 @@ add_action(
 		'plugin_setup',
 	)
 );
+
+// edd_sl_post_set_status
+// edd_sl_post_set_expiration
+// edd_sl_post_license_renewal
+// edd_sl_post_set_activation_limit
+// edd_sl_post_set_lifetime
+// edd_sl_generate_license_key
+// delete license license-actions.php
+
+// @todo: send license webhook when update customer information
