@@ -1137,4 +1137,3 @@ add_action(
 
 
 // @todo: send license webhook when update customer information
-// @todo: send license webhook when new license created
