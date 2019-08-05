@@ -125,6 +125,8 @@ class Give_EDD_Software_Licensing_API_Extended {
 		add_action( 'save_post_download', array( $this, 'setup_lumen_addon_webhook_job' ), 10, 1 );
 
 		add_action( 'edd_recurring_update_subscription', array( $this, 'setup_lumen_subscription_webhook_job' ), 10, 1 );
+		add_action( 'admin_init', array( $this, 'setup_lumen_subscription_webhook_job_when_subs_deleted' ), 2 );
+
 
 		add_action( 'give_edd_handle_addon_lumen_trigger', array( $this, 'trigger_lumen_addon_webhook' ), 10, 1 );
 		add_action( 'give_edd_handle_license_lumen_trigger', array( $this, 'trigger_lumen_license_webhook' ), 10, 1 );
@@ -1022,6 +1024,38 @@ class Give_EDD_Software_Licensing_API_Extended {
 	function setup_lumen_subscription_webhook_job( $subscription_id ) {
 		// Setup a background job.
 		wp_schedule_single_event( time() - 5, 'give_edd_handle_subscription_lumen_trigger', array( $subscription_id ) );
+	}
+
+
+	/**
+	 * Setup subscription lumen webhook job when delete subscription
+	 *
+	 * @return bool
+	 */
+	function setup_lumen_subscription_webhook_job_when_subs_deleted(){
+		if( empty( $_POST['sub_id'] ) ) {
+			return false;
+		}
+
+		if( empty( $_POST['edd_delete_subscription'] ) ) {
+			return false;
+		}
+
+		if( ! current_user_can( 'edit_shop_payments') ) {
+			return false;
+		}
+
+		if( ! wp_verify_nonce( $_POST['edd-recurring-update-nonce'], 'edd-recurring-update' ) ) {
+			return false;
+		}
+
+		$subscription = new EDD_Subscription( absint( $_POST['sub_id'] ) );
+
+		if( ! $subscription ) {
+			return false;
+		}
+
+		$this->setup_lumen_subscription_webhook_job( $subscription->id );
 	}
 
 	/**
