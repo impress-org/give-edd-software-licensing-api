@@ -120,7 +120,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 		add_action( 'edd_deactivate_site', array( $this, 'setup_lumen_license_webhook_job_when_deactivate_site' ), 5 );
 		add_action( 'edd_insert_site', array( $this, 'setup_lumen_license_webhook_job_when_add_site' ), 5 );
 		add_action( 'wp_ajax_edd_sl_regenerate_license', array( $this, 'setup_lumen_license_webhook_job_when_regenerate_key' ), 5 );
-
+		add_action( 'admin_init', array( $this, 'setup_lumen_license_webhook_job_when_process_license' ), 0 );
 
 		add_action( 'save_post_download', array( $this, 'setup_lumen_addon_webhook_job' ), 10, 1 );
 
@@ -916,7 +916,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	}
 
 	/**
-	 * Setup license lumen webhook job when regenrate key
+	 * Setup license lumen webhook job when regenerate key
 	 *
 	 * @return bool
 	 */
@@ -937,6 +937,62 @@ class Give_EDD_Software_Licensing_API_Extended {
 		$license = edd_software_licensing()->get_license( $license_id );
 
 		if ( ! $license ) {
+			return false;
+		}
+
+		$this->setup_lumen_license_webhook_job( $license_id );
+
+		return true;
+	}
+
+	/**
+	 * Setup license lumen webhook job when process license
+	 *
+	 * @return bool
+	 */
+	public function setup_lumen_license_webhook_job_when_process_license(){
+		if ( ! current_user_can( 'manage_licenses' ) ) {
+			return false;
+		}
+
+		if (
+			! isset( $_GET['_wpnonce'] )
+			|| ! wp_verify_nonce( $_GET['_wpnonce'], 'edd_sl_license_nonce' )
+		) {
+			return false;
+		}
+
+		if ( isset( $_GET['license'] ) ) {
+			if ( is_numeric( $_GET['license'] ) ) {
+				$new_license_id = edd_software_licensing()->license_meta_db->get_license_id( '_edd_sl_legacy_id', absint( $_GET['license'] ), true );
+			}
+
+			if ( empty( $new_license_id ) ) {
+				return false;
+			}
+		}
+
+		if( (
+			! isset( $_GET['license_id'] )
+			|| ! is_numeric( $_GET['license_id'] ) )
+		    && empty( $new_license_id )
+		) {
+			return false;
+		}
+
+		$license_id  = isset( $_GET['license_id'] ) ? absint( $_GET['license_id'] ) : $new_license_id;
+
+		$action = sanitize_text_field( $_GET['action'] );
+
+		$license = edd_software_licensing()->get_license( $license_id );
+
+		if( ! $license ) {
+			return false;
+		}
+
+		$allowed_actiones = array( 'deactivate', 'activate', 'enable', 'disable', 'renew', 'delete', 'set-lifetime' );
+
+		if( ! in_array( $action, $allowed_actiones ) ) {
 			return false;
 		}
 
@@ -1082,4 +1138,3 @@ add_action(
 
 // @todo: send license webhook when update customer information
 // @todo: send license webhook when new license created
-// @todo: send license webhook when delete license
