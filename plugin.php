@@ -1079,12 +1079,7 @@ add_action(
 	)
 );
 
-// edd_sl_post_set_status
-// edd_sl_post_set_expiration
-// edd_sl_post_license_renewal
-// edd_sl_post_set_activation_limit
-// edd_sl_post_set_lifetime
-// edd_sl_generate_license_key
-// delete license license-actions.php
 
 // @todo: send license webhook when update customer information
+// @todo: send license webhook when new license created
+// @todo: send license webhook when delete license
