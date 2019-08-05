@@ -124,8 +124,11 @@ class Give_EDD_Software_Licensing_API_Extended {
 
 		add_action( 'save_post_download', array( $this, 'setup_lumen_addon_webhook_job' ), 10, 1 );
 
+		add_action( 'edd_recurring_update_subscription', array( $this, 'setup_lumen_subscription_webhook_job' ), 10, 1 );
+
 		add_action( 'give_edd_handle_addon_lumen_trigger', array( $this, 'trigger_lumen_addon_webhook' ), 10, 1 );
 		add_action( 'give_edd_handle_license_lumen_trigger', array( $this, 'trigger_lumen_license_webhook' ), 10, 1 );
+		add_action( 'give_edd_handle_subscription_lumen_trigger', array( $this, 'trigger_lumen_subscription_webhook' ), 10, 1 );
 	}
 
 	/**
@@ -1012,6 +1015,16 @@ class Give_EDD_Software_Licensing_API_Extended {
 	}
 
 	/**
+	 * Setup add-on lumen webhook job
+	 *
+	 * @param int $subscription_id
+	 */
+	function setup_lumen_subscription_webhook_job( $subscription_id ) {
+		// Setup a background job.
+		wp_schedule_single_event( time() - 5, 'give_edd_handle_subscription_lumen_trigger', array( $subscription_id ) );
+	}
+
+	/**
 	 * Trigger license lumen webhook job
 	 *
 	 * @param string $license_key
@@ -1059,6 +1072,47 @@ class Give_EDD_Software_Licensing_API_Extended {
 				'timeout'   => 15,
 				'body' => array(
 					'addon' => get_the_title( $download_id ),
+					'token' => $token
+				)
+			)
+		);
+	}
+
+	/**
+	 * Trigger subscription lumen webhook job
+	 *
+	 * @param string $subscription_id
+	 *
+	 * @return bool
+	 */
+	public function trigger_lumen_subscription_webhook( $subscription_id ) {
+		$token = $this->get_lumen_token();
+
+		// Exit.
+		if ( empty( $token ) ) {
+			return false;
+		}
+
+		$subscription = new EDD_Subscription( $subscription_id );
+
+		if( ! $subscription ) {
+			return false;
+		}
+
+		$license = edd_software_licensing()->get_license_by_purchase( $subscription->parent_payment_id, $subscription->product_id );
+
+		if( ! $license ) {
+			return false;
+		}
+
+		$license_key = edd_software_licensing()->get_license_key( $license->ID );
+
+		wp_remote_post(
+			$this->get_lumen_api_uri('update-subscription' ),
+			array(
+				'timeout'   => 15,
+				'body' => array(
+					'license' => $license_key,
 					'token' => $token
 				)
 			)
