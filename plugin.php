@@ -119,6 +119,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 
 		add_action( 'edd_deactivate_site', array( $this, 'setup_lumen_license_webhook_job_when_deactivate_site' ), 5 );
 		add_action( 'edd_insert_site', array( $this, 'setup_lumen_license_webhook_job_when_add_site' ), 5 );
+		add_action( 'wp_ajax_edd_sl_regenerate_license', array( $this, 'setup_lumen_license_webhook_job_when_regenerate_key' ), 5 );
 
 
 		add_action( 'save_post_download', array( $this, 'setup_lumen_addon_webhook_job' ), 10, 1 );
@@ -906,6 +907,36 @@ class Give_EDD_Software_Licensing_API_Extended {
 		}
 
 		if ( $license->is_at_limit() && ! current_user_can( 'manage_licenses' ) ) {
+			return false;
+		}
+
+		$this->setup_lumen_license_webhook_job( $license_id );
+
+		return true;
+	}
+
+	/**
+	 * Setup license lumen webhook job when regenrate key
+	 *
+	 * @return bool
+	 */
+	public function setup_lumen_license_webhook_job_when_regenerate_key(){
+		if ( ! current_user_can( 'manage_licenses' ) ) {
+			return false;
+		}
+
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'edd-sl-regenerate-license' ) ) {
+			return false;
+		}
+
+		if ( ! isset( $_POST['license_id'] ) || ! is_numeric( $_POST['license_id'] ) ) {
+			return false;
+		}
+
+		$license_id = absint( $_POST['license_id'] );
+		$license = edd_software_licensing()->get_license( $license_id );
+
+		if ( ! $license ) {
 			return false;
 		}
 
