@@ -70,6 +70,13 @@ class Give_EDD_Software_Licensing_API_Extended {
 	private $license_webhook_triggered = array();
 
 	/**
+	 * Lumen token params
+	 * @var string
+	 */
+	private $lumen_token = '';
+	private $lumen_token_expire = '';
+
+	/**
 	 * Give_EDD_Software_Licensing_API_Extended constructor.
 	 */
 	private function __construct() {
@@ -1180,8 +1187,12 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 * @return string
 	 */
 	private function get_lumen_token() {
-		$token = '';
+		// Use cached token.
+		if( $this->lumen_token_expire && $this->lumen_token_expire > current_time('timestamp') ) {
+			return $this->lumen_token;
+		}
 
+		$token = '';
 		$response = wp_remote_post(
 			$this->get_lumen_api_uri( 'auth' ),
 			array(
@@ -1197,6 +1208,9 @@ class Give_EDD_Software_Licensing_API_Extended {
 			$response = json_decode( wp_remote_retrieve_body( $response ), true );
 			$token    = ! empty( $response['token'] ) ? $response['token'] : '';
 		}
+
+		$this->token = $token;
+		$this->lumen_token_expire = strtotime('+ 5 second', current_time('timestamp'));
 
 		return $token;
 	}
