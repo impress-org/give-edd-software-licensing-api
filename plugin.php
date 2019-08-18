@@ -64,6 +64,12 @@ class Give_EDD_Software_Licensing_API_Extended {
 	private static $instance;
 
 	/**
+	 * List of licenses for which webhook triggered
+	 * @var array
+	 */
+	private $license_webhook_triggered = array();
+
+	/**
 	 * Give_EDD_Software_Licensing_API_Extended constructor.
 	 */
 	private function __construct() {
@@ -825,19 +831,18 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 * @return bool
 	 */
 	function setup_lumen_license_webhook_job( $license_id ) {
+		/* @var EDD_License $license */
 		$license = edd_software_licensing()->get_license( $license_id );
+		$license_key = $license->key;
 
 
 		// Exit.
-		if(
-			! $license
-			|| $license->get_child_licenses() // do not process parent of group of license.
-		) {
+		if( ! $license ) {
 			return false;
 		}
 
 		// Setup a background job.
-		$this->trigger_lumen_license_webhook( $license->key );
+		$this->trigger_lumen_license_webhook( $license_key );
 
 		return true;
 	}
@@ -1059,11 +1064,33 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 * @return bool
 	 */
 	public function trigger_lumen_license_webhook( $license_key ) {
+		// check if webhook already triggered for license.
+		if( in_array( $license_key, $this->license_webhook_triggered ) ) {
+			return false;
+		}
+
+		$this->license_webhook_triggered[] = $license_key;
+
 		$token = $this->get_lumen_token();
 
 		// Exit.
 		if ( empty( $token ) ) {
 			return false;
+		}
+
+		$license = edd_software_licensing()->get_license( $license_key, true );
+
+		// Check if we are processing bundled license.
+		if( $licenses = $license->get_child_licenses() ) {
+			$temp = array();
+
+			/* @var EDD_License $item */
+			foreach ( $licenses as $item ){
+				$temp[] = $item->key;
+				$this->license_webhook_triggered[] = $item->key;
+			}
+
+			$license_key = implode( ',', $temp );
 		}
 
 		wp_remote_post(
