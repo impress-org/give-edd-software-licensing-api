@@ -67,14 +67,14 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 * List of licenses for which webhook triggered
 	 * @var array
 	 */
-	private $license_webhook_triggered = array();
+	private static $license_webhook_triggered = array();
 
 	/**
 	 * Lumen token params
 	 * @var string
 	 */
-	private $lumen_token = '';
-	private $lumen_token_expire = '';
+	private static $lumen_token = '';
+	private static $lumen_token_expire = '';
 
 	/**
 	 * Give_EDD_Software_Licensing_API_Extended constructor.
@@ -839,12 +839,12 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 */
 	function setup_lumen_license_webhook_job( $license_id ) {
 		/* @var EDD_License $license */
-		$license = edd_software_licensing()->get_license( $license_id );
+		$license     = edd_software_licensing()->get_license( $license_id );
 		$license_key = $license->key;
 
 
 		// Exit.
-		if( ! $license ) {
+		if ( ! $license ) {
 			return false;
 		}
 
@@ -859,7 +859,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 *
 	 * @return bool
 	 */
-	public function setup_lumen_license_webhook_job_when_deactivate_site(){
+	public function setup_lumen_license_webhook_job_when_deactivate_site() {
 		if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'edd_deactivate_site_nonce' ) ) {
 			return false;
 		}
@@ -895,7 +895,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 *
 	 * @return bool
 	 */
-	public function setup_lumen_license_webhook_job_when_add_site(){
+	public function setup_lumen_license_webhook_job_when_add_site() {
 		if ( ! wp_verify_nonce( $_POST['edd_add_site_nonce'], 'edd_add_site_nonce' ) ) {
 			return false;
 		}
@@ -905,14 +905,14 @@ class Give_EDD_Software_Licensing_API_Extended {
 			$_POST['license'] = $_POST['license_id'];
 		}
 
-		$license_id  = absint( $_POST['license'] );
-		$license     = edd_software_licensing()->get_license( $license_id );
+		$license_id = absint( $_POST['license'] );
+		$license    = edd_software_licensing()->get_license( $license_id );
 		if ( $license_id !== $license->ID ) {
 			return false;
 		}
 
 		if (
-			( is_admin() && ! current_user_can( 'manage_licenses'  ) )
+			( is_admin() && ! current_user_can( 'manage_licenses' ) )
 			|| ( ! is_admin() && $license->user_id != get_current_user_id() )
 		) {
 			return false;
@@ -932,7 +932,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 *
 	 * @return bool
 	 */
-	public function setup_lumen_license_webhook_job_when_regenerate_key(){
+	public function setup_lumen_license_webhook_job_when_regenerate_key() {
 		if ( ! current_user_can( 'manage_licenses' ) ) {
 			return false;
 		}
@@ -946,7 +946,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 		}
 
 		$license_id = absint( $_POST['license_id'] );
-		$license = edd_software_licensing()->get_license( $license_id );
+		$license    = edd_software_licensing()->get_license( $license_id );
 
 		if ( ! $license ) {
 			return false;
@@ -962,7 +962,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 *
 	 * @return bool
 	 */
-	public function setup_lumen_license_webhook_job_when_process_license(){
+	public function setup_lumen_license_webhook_job_when_process_license() {
 		if ( ! current_user_can( 'manage_licenses' ) ) {
 			return false;
 		}
@@ -984,27 +984,27 @@ class Give_EDD_Software_Licensing_API_Extended {
 			}
 		}
 
-		if( (
-			! isset( $_GET['license_id'] )
-			|| ! is_numeric( $_GET['license_id'] ) )
-		    && empty( $new_license_id )
+		if ( (
+			     ! isset( $_GET['license_id'] )
+			     || ! is_numeric( $_GET['license_id'] ) )
+		     && empty( $new_license_id )
 		) {
 			return false;
 		}
 
-		$license_id  = isset( $_GET['license_id'] ) ? absint( $_GET['license_id'] ) : $new_license_id;
+		$license_id = isset( $_GET['license_id'] ) ? absint( $_GET['license_id'] ) : $new_license_id;
 
 		$action = sanitize_text_field( $_GET['action'] );
 
 		$license = edd_software_licensing()->get_license( $license_id );
 
-		if( ! $license ) {
+		if ( ! $license ) {
 			return false;
 		}
 
 		$allowed_actiones = array( 'deactivate', 'activate', 'enable', 'disable', 'renew', 'delete', 'set-lifetime' );
 
-		if( ! in_array( $action, $allowed_actiones ) ) {
+		if ( ! in_array( $action, $allowed_actiones ) ) {
 			return false;
 		}
 
@@ -1037,26 +1037,26 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 *
 	 * @return bool
 	 */
-	function setup_lumen_subscription_webhook_job_when_subs_deleted(){
-		if( empty( $_POST['sub_id'] ) ) {
+	function setup_lumen_subscription_webhook_job_when_subs_deleted() {
+		if ( empty( $_POST['sub_id'] ) ) {
 			return false;
 		}
 
-		if( empty( $_POST['edd_delete_subscription'] ) ) {
+		if ( empty( $_POST['edd_delete_subscription'] ) ) {
 			return false;
 		}
 
-		if( ! current_user_can( 'edit_shop_payments') ) {
+		if ( ! current_user_can( 'edit_shop_payments' ) ) {
 			return false;
 		}
 
-		if( ! wp_verify_nonce( $_POST['edd-recurring-update-nonce'], 'edd-recurring-update' ) ) {
+		if ( ! wp_verify_nonce( $_POST['edd-recurring-update-nonce'], 'edd-recurring-update' ) ) {
 			return false;
 		}
 
 		$subscription = new EDD_Subscription( absint( $_POST['sub_id'] ) );
 
-		if( ! $subscription ) {
+		if ( ! $subscription ) {
 			return false;
 		}
 
@@ -1072,11 +1072,11 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 */
 	public function trigger_lumen_license_webhook( $license_key ) {
 		// check if webhook already triggered for license.
-		if( in_array( $license_key, $this->license_webhook_triggered ) ) {
+		if ( in_array( $license_key, self::$license_webhook_triggered ) ) {
 			return false;
 		}
 
-		$this->license_webhook_triggered[] = $license_key;
+		self::$license_webhook_triggered[] = $license_key;
 
 		$token = $this->get_lumen_token();
 
@@ -1088,25 +1088,25 @@ class Give_EDD_Software_Licensing_API_Extended {
 		$license = edd_software_licensing()->get_license( $license_key, true );
 
 		// Check if we are processing bundled license.
-		if( $licenses = $license->get_child_licenses() ) {
+		if ( $licenses = $license->get_child_licenses() ) {
 			$temp = array();
 
 			/* @var EDD_License $item */
-			foreach ( $licenses as $item ){
-				$temp[] = $item->key;
-				$this->license_webhook_triggered[] = $item->key;
+			foreach ( $licenses as $item ) {
+				$temp[]                            = $item->key;
+				self::$license_webhook_triggered[] = $item->key;
 			}
 
 			$license_key = implode( ',', $temp );
 		}
 
 		wp_remote_post(
-			$this->get_lumen_api_uri('update-license' ),
+			$this->get_lumen_api_uri( 'update-license' ),
 			array(
-				'timeout'   => 15,
-				'body' => array(
+				'timeout' => 15,
+				'body'    => array(
 					'license' => $license_key,
-					'token' => $token
+					'token'   => $token
 				)
 			)
 		);
@@ -1128,10 +1128,10 @@ class Give_EDD_Software_Licensing_API_Extended {
 		}
 
 		wp_remote_post(
-			$this->get_lumen_api_uri('update-addon' ),
+			$this->get_lumen_api_uri( 'update-addon' ),
 			array(
-				'timeout'   => 15,
-				'body' => array(
+				'timeout' => 15,
+				'body'    => array(
 					'addon' => get_the_title( $download_id ),
 					'token' => $token
 				)
@@ -1156,25 +1156,25 @@ class Give_EDD_Software_Licensing_API_Extended {
 
 		$subscription = new EDD_Subscription( $subscription_id );
 
-		if( ! $subscription ) {
+		if ( ! $subscription ) {
 			return false;
 		}
 
 		$license = edd_software_licensing()->get_license_by_purchase( $subscription->parent_payment_id, $subscription->product_id );
 
-		if( ! $license ) {
+		if ( ! $license ) {
 			return false;
 		}
 
 		$license_key = edd_software_licensing()->get_license_key( $license->ID );
 
 		wp_remote_post(
-			$this->get_lumen_api_uri('update-subscription' ),
+			$this->get_lumen_api_uri( 'update-subscription' ),
 			array(
-				'timeout'   => 15,
-				'body' => array(
+				'timeout' => 15,
+				'body'    => array(
 					'license' => $license_key,
-					'token' => $token
+					'token'   => $token
 				)
 			)
 		);
@@ -1188,11 +1188,11 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 */
 	private function get_lumen_token() {
 		// Use cached token.
-		if( $this->lumen_token_expire && $this->lumen_token_expire > current_time('timestamp') ) {
-			return $this->lumen_token;
+		if ( self::$lumen_token_expire > current_time( 'timestamp' ) ) {
+			return self::$lumen_token;
 		}
 
-		$token = '';
+		$token    = '';
 		$response = wp_remote_post(
 			$this->get_lumen_api_uri( 'auth' ),
 			array(
@@ -1209,8 +1209,8 @@ class Give_EDD_Software_Licensing_API_Extended {
 			$token    = ! empty( $response['token'] ) ? $response['token'] : '';
 		}
 
-		$this->token = $token;
-		$this->lumen_token_expire = strtotime('+ 5 second', current_time('timestamp'));
+		self::$lumen_token        = $token;
+		self::$lumen_token_expire = $token ? strtotime( '+ 5 second', current_time( 'timestamp' ) ) : '';
 
 		return $token;
 	}
