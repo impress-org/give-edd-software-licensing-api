@@ -126,11 +126,6 @@ class Give_EDD_Software_Licensing_API_Extended {
 
 		add_action( 'edd_recurring_update_subscription', array( $this, 'setup_lumen_subscription_webhook_job' ), 10, 1 );
 		add_action( 'admin_init', array( $this, 'setup_lumen_subscription_webhook_job_when_subs_deleted' ), 2 );
-
-
-		add_action( 'give_edd_handle_addon_lumen_trigger', array( $this, 'trigger_lumen_addon_webhook' ), 10, 1 );
-		add_action( 'give_edd_handle_license_lumen_trigger', array( $this, 'trigger_lumen_license_webhook' ), 10, 1 );
-		add_action( 'give_edd_handle_subscription_lumen_trigger', array( $this, 'trigger_lumen_subscription_webhook' ), 10, 1 );
 	}
 
 	/**
@@ -842,7 +837,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 		}
 
 		// Setup a background job.
-		wp_schedule_single_event( time() - 5, 'give_edd_handle_license_lumen_trigger', array( $license->key ) );
+		$this->trigger_lumen_license_webhook( $license->key );
 
 		return true;
 	}
@@ -1012,8 +1007,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 * @param int $download_id
 	 */
 	function setup_lumen_addon_webhook_job( $download_id ) {
-		// Setup a background job.
-		wp_schedule_single_event( time() - 5, 'give_edd_handle_addon_lumen_trigger', array( $download_id ) );
+		$this->trigger_lumen_addon_webhook( $download_id );
 	}
 
 	/**
@@ -1022,8 +1016,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 * @param int $subscription_id
 	 */
 	function setup_lumen_subscription_webhook_job( $subscription_id ) {
-		// Setup a background job.
-		wp_schedule_single_event( time() - 5, 'give_edd_handle_subscription_lumen_trigger', array( $subscription_id ) );
+		$this->trigger_lumen_subscription_webhook( $subscription_id );
 	}
 
 
