@@ -139,6 +139,8 @@ class Give_EDD_Software_Licensing_API_Extended {
 
 		add_action( 'edd_recurring_update_subscription', array( $this, 'setup_lumen_subscription_webhook_job' ), 10, 1 );
 		add_action( 'admin_init', array( $this, 'setup_lumen_subscription_webhook_job_when_subs_deleted' ), 2 );
+
+		add_action( 'edd_post_edit_customer', array( $this, 'setup_lumen_license_webhook_job_when_update_customer' ), 10, 2 );
 	}
 
 	/**
@@ -885,7 +887,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 			return false;
 		}
 
-		$this->setup_lumen_license_webhook_job( $license_id );
+		$this->trigger_lumen_license_webhook( $license->key );
 
 		return true;
 	}
@@ -922,7 +924,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 			return false;
 		}
 
-		$this->setup_lumen_license_webhook_job( $license_id );
+		$this->trigger_lumen_license_webhook( $license->key );
 
 		return true;
 	}
@@ -952,7 +954,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 			return false;
 		}
 
-		$this->setup_lumen_license_webhook_job( $license_id );
+		$this->trigger_lumen_license_webhook( $license->key );
 
 		return true;
 	}
@@ -1008,9 +1010,31 @@ class Give_EDD_Software_Licensing_API_Extended {
 			return false;
 		}
 
-		$this->setup_lumen_license_webhook_job( $license_id );
+		$this->trigger_lumen_license_webhook( $license->key );
 
 		return true;
+	}
+
+	/**
+	 * Setup add-on lumen webhook job when update customer
+	 *
+	 * @param $customer_id
+	 * @param $customer_data
+	 */
+	public function setup_lumen_license_webhook_job_when_update_customer( $customer_id, $customer_data ) {
+		$licenses = edd_software_licensing()->licenses_db->get_licenses( array(
+			'number'      => -1,
+			'customer_id' => $customer_id,
+			'orderby'     => 'id',
+			'order'       => 'ASC',
+		) );
+
+
+		if( $licenses ) {
+			foreach ( $licenses as $license ) {
+				$this->trigger_lumen_license_webhook( $license->key );
+			}
+		}
 	}
 
 	/**
