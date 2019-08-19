@@ -1280,7 +1280,3 @@ add_action(
 		'plugin_setup',
 	)
 );
-
-
-// @todo: send license webhook when update customer information
-// @todo: update/license cache when user update
