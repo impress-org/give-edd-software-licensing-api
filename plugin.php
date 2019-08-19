@@ -1247,7 +1247,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 * @return string
 	 */
 	private function get_lumen_api_uri( $type = '' ) {
-		$url = LUMEN_SERVER_URI;
+		$url = untrailingslashit( LUMEN_SERVER_URI );
 
 		switch ( $type ) {
 			case 'auth':
