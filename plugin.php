@@ -464,6 +464,7 @@ class Give_EDD_Software_Licensing_API_Extended {
 						'edd_action' => 'check_license',
 						'license'    => $license,
 						'url'        => $args['url'],
+						'item_name'  => $args['item_name'],
 					)
 				);
 
