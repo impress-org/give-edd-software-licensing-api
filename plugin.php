@@ -70,6 +70,18 @@ class Give_EDD_Software_Licensing_API_Extended {
 	private static $license_webhook_triggered = array();
 
 	/**
+	 * List of add-ons for which webhook triggered
+	 * @var array
+	 */
+	private static $addon_webhook_triggered = array();
+
+	/**
+	 * List of subscription for which webhook triggered
+	 * @var array
+	 */
+	private static $subscription_webhook_triggered = array();
+
+	/**
 	 * Lumen token params
 	 * @var string
 	 */
@@ -1144,12 +1156,19 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 * @return bool
 	 */
 	public function trigger_lumen_addon_webhook( $download_id ) {
+		// check if webhook already triggered for license.
+		if ( in_array( $download_id, self::$addon_webhook_triggered ) ) {
+			return false;
+		}
+
 		$token = $this->get_lumen_token();
 
 		// Exit.
 		if ( empty( $token ) ) {
 			return false;
 		}
+
+		self::$subscription_webhook_triggered[] = $download_id;
 
 		wp_remote_post(
 			$this->get_lumen_api_uri( 'update-addon' ),
@@ -1171,6 +1190,11 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 * @return bool
 	 */
 	public function trigger_lumen_subscription_webhook( $subscription_id ) {
+		// check if webhook already triggered for license.
+		if ( in_array( $subscription_id, self::$subscription_webhook_triggered ) ) {
+			return false;
+		}
+
 		$token = $this->get_lumen_token();
 
 		// Exit.
@@ -1191,6 +1215,8 @@ class Give_EDD_Software_Licensing_API_Extended {
 		}
 
 		$license_key = edd_software_licensing()->get_license_key( $license->ID );
+
+		self::$subscription_webhook_triggered[] = $subscription_id;
 
 		wp_remote_post(
 			$this->get_lumen_api_uri( 'update-subscription' ),
