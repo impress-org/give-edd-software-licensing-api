@@ -1223,8 +1223,9 @@ class Give_EDD_Software_Licensing_API_Extended {
 			array(
 				'timeout' => 15,
 				'body'    => array(
-					'license' => $license_key,
-					'token'   => $token
+					'license'      => $license_key,
+					'subscription' => $subscription_id,
+					'token'        => $token
 				)
 			)
 		);
