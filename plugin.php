@@ -1035,14 +1035,14 @@ class Give_EDD_Software_Licensing_API_Extended {
 	 */
 	public function setup_lumen_license_webhook_job_when_update_customer( $customer_id, $customer_data ) {
 		$licenses = edd_software_licensing()->licenses_db->get_licenses( array(
-			'number'      => -1,
+			'number'      => - 1,
 			'customer_id' => $customer_id,
 			'orderby'     => 'id',
 			'order'       => 'ASC',
 		) );
 
 
-		if( $licenses ) {
+		if ( $licenses ) {
 			foreach ( $licenses as $license ) {
 				$this->trigger_lumen_license_webhook( $license->key );
 			}
